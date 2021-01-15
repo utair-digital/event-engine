@@ -1,0 +1,23 @@
+import setuptools
+
+with open("README.md", "r", encoding='utf-8') as readme:
+    long_description = readme.read()
+
+setuptools.setup(
+    name="event_engine_async",
+    version="0.0.1",
+    author="utair",
+    description="Asynchronous Event engine with kafka bus",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://gitlab.utair.ru/digital/repository/event-engine-async",
+    install_requires=['aiokafka==0.7.0', 'msgpack-python'],
+    keywords='utair',
+    license="Private",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.9',
+    ],
+)
