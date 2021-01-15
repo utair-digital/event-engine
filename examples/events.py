@@ -4,7 +4,7 @@ from event_engine_async.event import Event
 from event_engine_async.observer import Observer
 
 
-class PaymentASMNotifyEvent(Event):
+class DemoEvent(Event):
     topic = "demo_topic"
     is_internal = True
     is_publishable = True
@@ -16,20 +16,21 @@ class PaymentASMNotifyEvent(Event):
         return None
 
 
-class DemoPublishableObserver(Observer):
+class DemoObserver(Observer):
     """
     Обработчик события сохранения заказа
     """
     observer_id = '__DemoSubscriber__'
 
-    async def handle_event(self, event: PaymentASMNotifyEvent):
+    async def handle_event(self, event: DemoEvent):
         print(f"HANDLED {event.serialize()}")
 
 
 async def register_order_saved_observer():
     manager = get_event_manager()
     manager.register(
-        DemoPublishableObserver.observer_id,
-        [PaymentASMNotifyEvent],
-        DemoPublishableObserver()
+        DemoObserver.observer_id,
+        [DemoEvent],
+        DemoObserver(),
+        is_type_check=True
     )

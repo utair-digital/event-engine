@@ -7,7 +7,7 @@
 import uuid
 import asyncio
 from event_engine_async import get_event_manager
-from examples.events import register_order_saved_observer, PaymentASMNotifyEvent
+from examples.events import register_order_saved_observer, DemoEvent
 
 event_engine = get_event_manager()
 
@@ -17,7 +17,7 @@ async def raise_events():
 
     for i in range(10):
         await event_engine.raise_event(
-            PaymentASMNotifyEvent(dict(
+            DemoEvent(dict(
                 who_am_i='raised_event',
                 event_id=str(uuid.uuid4())
             ))
