@@ -7,8 +7,8 @@ from examples.kafka_settings import KAFKA_CONFIG
 
 class DemoEvent(Event):
     topic = "demo_topic"
-    is_internal = False
-    is_publishable = False
+    is_internal = True
+    is_publishable = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -19,7 +19,7 @@ class DemoEvent(Event):
 
 class DemoObserver(Observer):
     """
-    Обработчик события сохранения заказа
+    Обработчик события
     """
     observer_id = '__DemoSubscriber__'
 

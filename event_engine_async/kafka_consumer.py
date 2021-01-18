@@ -48,11 +48,13 @@ class KafkaSubClient:
             group_id=self.kafka_config.service_name
         )
         # Get cluster layout and topic/partition allocation
+        self.logger.info("Getting cluster layout and topic/partition allocation..")
         await consumer.start()
         try:
+            self.logger.info("Waiting for new messages..")
             async for msg in consumer:
                 try:
-                    self.logger.info("Got new message")
+                    self.logger.info("Got a new message")
                     await self.on_message(msg)
                 except BaseEventEngineError:
                     pass

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding='utf-8') as readme:
 
 setuptools.setup(
     name="event_engine_async",
-    version="0.0.1",
+    version="1.0.0",
     author="utair",
     description="Asynchronous Event engine with kafka bus",
     long_description=long_description,
