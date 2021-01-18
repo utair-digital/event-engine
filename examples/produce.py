@@ -8,8 +8,9 @@ import uuid
 import asyncio
 from event_engine_async import get_event_manager
 from examples.events import register_order_saved_observer, DemoEvent
+from examples.kafka_settings import KAFKA_CONFIG
 
-event_engine = get_event_manager()
+event_engine = get_event_manager(KAFKA_CONFIG)
 
 
 async def raise_events():

@@ -46,6 +46,11 @@ class Event(BaseEvent):
         self.is_published = is_published
         self.is_internal = is_internal or self.is_internal
         self.event_key = event_key if event_key else self.__get_event_key__()
+        if not any([
+            self.is_publishable,
+            self.is_internal
+        ]):
+            raise EventBuildingError("Event must be at least one of is_internal/is_publishable")
 
     def serialize(self) -> Dict:
         return {

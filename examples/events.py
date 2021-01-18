@@ -2,12 +2,13 @@ from typing import Union
 from event_engine_async import get_event_manager
 from event_engine_async.event import Event
 from event_engine_async.observer import Observer
+from examples.kafka_settings import KAFKA_CONFIG
 
 
 class DemoEvent(Event):
     topic = "demo_topic"
-    is_internal = True
-    is_publishable = True
+    is_internal = False
+    is_publishable = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,7 +28,7 @@ class DemoObserver(Observer):
 
 
 async def register_order_saved_observer():
-    manager = get_event_manager()
+    manager = get_event_manager(KAFKA_CONFIG)
     manager.register(
         DemoObserver.observer_id,
         [DemoEvent],

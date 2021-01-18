@@ -10,6 +10,7 @@ from .base import BaseEventManager
 from .event import Event
 from .observable import Observable
 from .observer import Observer
+from .kafka_config import KafkaConfig
 from .exceptions import (
     InvalidObserverIDError,
     EventNotRegisteredError,
@@ -29,9 +30,10 @@ class EventManager(BaseEventManager):
     __binds__ = dict()
 
     def __init__(
-            self
+            self,
+            kafka_config: KafkaConfig
     ):
-        # self.producer = AIOKafkaProducer(bootstrap_servers='localhost:29092')
+        self.kafka_config = kafka_config
         self.__binds__ = dict()
 
     class FakeObserver(Observer):
@@ -146,17 +148,7 @@ class EventManager(BaseEventManager):
         """
         event_type = type(event)
 
-        if event_type not in self.__binds__.keys() and not silent:
-            raise EventNotRegisteredError("Raised event is not registered")
-
-        if event_type in self.__binds__.keys():
-            if all([event.is_publishable, not event.is_published]):
-                await self.__send_to_kafka_bus(event)
-
-            if not event.is_internal:
-                # обработчик не нуждается в вызове внутри приложения
-                return
-
+        async def __raise__():
             if all([is_async, async_task]):
                 # отправка события в селери таску
                 self.__binds__[event_type].notify_observers_async(event, async_task)
@@ -164,15 +156,32 @@ class EventManager(BaseEventManager):
                 # вызов обработчика в текущем потоке
                 await self.__binds__[event_type].notify_observers(event)
 
-    @staticmethod
-    async def __send_to_kafka_bus(event: Event) -> None:
+        if event_type not in self.__binds__.keys() and not silent:
+            raise EventNotRegisteredError("Raised event is not registered")
+
+        if event_type in self.__binds__.keys():
+            if event.is_published:
+                # Опубликованное событие прилетело из кафки, в этом случае его нужно зарейзить внутри приложения
+                return await __raise__()
+
+            if all([event.is_publishable, not event.is_published]):
+                await self.__send_to_kafka_bus(event)
+
+            if not event.is_internal:
+                # обработчик не нуждается в вызове внутри приложения
+                return
+            await __raise__()
+
+    async def __send_to_kafka_bus(self, event: Event) -> None:
         # TODO не создавать продюссера каждый раз?
         # продюссер должен быть создан с эвент лупе
-        producer = AIOKafkaProducer(bootstrap_servers='localhost:29092')
+        producer = AIOKafkaProducer(bootstrap_servers=self.kafka_config.servers)
         await producer.start()
         try:
-            await producer.send(**event.build_for_kafka())
+            # Ставим флаг, что событие было опубликовано в кафке, таким образом оно не будет опубликовано
+            # на клиете еще раз
             event.is_published = True
+            await producer.send(**event.build_for_kafka())
         except KafkaError:
             event.is_published = False
         finally:

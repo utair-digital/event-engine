@@ -2,6 +2,7 @@
 Модуль движка соытий
 """
 import asyncio
+import logging
 from typing import Callable, Optional
 
 from .event import Event                                # noqa
@@ -17,20 +18,22 @@ from .event_manager import EventManager
 __MANAGER: Optional[EventManager] = None
 
 
-def get_event_manager() -> EventManager:
+def get_event_manager(kafka_conf: KafkaConfig) -> EventManager:
     global __MANAGER
     if not __MANAGER:
-        __MANAGER = EventManager()
+        __MANAGER = EventManager(kafka_config=kafka_conf)
     return __MANAGER
 
 
 def run_kafka_consumer(
         kafka_conf: KafkaConfig,
-        register_observers_function: Callable
+        register_observers_function: Callable,
+        logger: logging.Logger
 ):
     client = KafkaSubClient(
-        event_manager=get_event_manager(),
+        event_manager=get_event_manager(kafka_conf),
         event_register_function=register_observers_function,
-        kafka_config=kafka_conf
+        kafka_config=kafka_conf,
+        logger=logger
     )
     asyncio.run(client.listen())

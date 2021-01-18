@@ -1,20 +1,15 @@
-from event_engine_async.kafka_config import KafkaConfig
+import logging
 from event_engine_async import run_kafka_consumer
 
 from examples.events import register_order_saved_observer
+from examples.kafka_settings import KAFKA_CONFIG
 
-KAFKA_CONFIG = {
-    'servers': ['localhost:29092'],
-    'subscribe_topics': ['demo_topic'],
-    'service_name': "example_service"
-}
 
+log = logging.getLogger("KafkaSubClient")
+log.setLevel("INFO")
 
 run_kafka_consumer(
-    KafkaConfig(**{
-        'servers': ['localhost:29092'],
-        'subscribe_topics': ['demo_topic'],
-        'service_name': "example_service"
-        }),
-    register_order_saved_observer
+    KAFKA_CONFIG,
+    register_order_saved_observer,
+    log
 )
