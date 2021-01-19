@@ -11,7 +11,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://gitlab.utair.ru/digital/repository/event-engine-async",
-    install_requires=['aiokafka==0.7.0', 'msgpack-python'],
+    install_requires=['aiokafka==0.7.0', 'msgpack'],
     keywords='utair',
     license="Private",
     packages=setuptools.find_packages(),
