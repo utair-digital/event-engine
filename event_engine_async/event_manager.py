@@ -3,7 +3,6 @@ import logging
 import types
 from typing import List, Type, Dict, Callable, Union
 
-from aiokafka import AIOKafkaProducer
 from aiokafka.errors import KafkaError
 
 from .base import BaseEventManager
@@ -17,6 +16,7 @@ from .exceptions import (
     InvalidEventType,
     InvalidObserverType,
 )
+from .kafka_producer import get_kafka_producer
 
 logger = logging.getLogger('event_manager')
 
@@ -165,7 +165,11 @@ class EventManager(BaseEventManager):
                 return await __raise__()
 
             if all([event.is_publishable, not event.is_published]):
-                await self.__send_to_kafka_bus(event)
+                try:
+                    await self.__send_to_kafka_bus(event)
+                except Exception as e:
+                    # TODO Залогировать
+                    pass
 
             if not event.is_internal:
                 # обработчик не нуждается в вызове внутри приложения
@@ -173,19 +177,14 @@ class EventManager(BaseEventManager):
             await __raise__()
 
     async def __send_to_kafka_bus(self, event: Event) -> None:
-        # TODO не создавать продюссера каждый раз?
-        # продюссер должен быть создан с эвент лупе
-        producer = AIOKafkaProducer(bootstrap_servers=self.kafka_config.servers)
-        await producer.start()
+        producer = await get_kafka_producer(config=self.kafka_config)
         try:
-            # Ставим флаг, что событие было опубликовано в кафке, таким образом оно не будет опубликовано
-            # на клиете еще раз
+            # Ставим флаг, что событие было опубликовано в кафке,
+            # таким образом оно не будет опубликовано на клиете еще раз
             event.is_published = True
-            await producer.send(**event.build_for_kafka())
+            await producer.send_and_wait(**event.build_for_kafka())
         except KafkaError:
             event.is_published = False
-        finally:
-            await producer.stop()
 
     def un_register(self, event: Event, handler: Union[Observer, Callable]) -> None:
         """Удаление байндинга обработчика и события"""

@@ -16,7 +16,7 @@ event_engine = get_event_manager(KAFKA_CONFIG)
 async def raise_events():
     await register_order_saved_observer()
 
-    for i in range(10):
+    for i in range(100):
         await event_engine.raise_event(
             DemoEvent(dict(
                 who_am_i='raised_event',
