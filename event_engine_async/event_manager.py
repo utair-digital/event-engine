@@ -2,7 +2,7 @@ import logging
 
 import types
 from typing import List, Type, Dict, Callable, Union
-
+from copy import deepcopy
 from aiokafka.errors import KafkaError
 
 from .base import BaseEventManager
@@ -147,14 +147,15 @@ class EventManager(BaseEventManager):
             будет брошено исключение, Если значение True отсутсвие незарегистрированного события будет проигнорированно
         """
         event_type = type(event)
+        initial_event: event_type = deepcopy(event)
 
         async def __raise__():
             if all([is_async, async_task]):
                 # отправка события в селери таску
-                self.__binds__[event_type].notify_observers_async(event, async_task)
+                self.__binds__[event_type].notify_observers_async(initial_event, async_task)
             else:
                 # вызов обработчика в текущем потоке
-                await self.__binds__[event_type].notify_observers(event)
+                await self.__binds__[event_type].notify_observers(initial_event)
 
         if event_type not in self.__binds__.keys() and not silent:
             raise EventNotRegisteredError("Raised event is not registered")

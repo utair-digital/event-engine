@@ -14,7 +14,7 @@ setuptools.setup(
     install_requires=['aiokafka==0.7.0', 'msgpack'],
     keywords='utair',
     license="Private",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=('examples',)),
     classifiers=[
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
