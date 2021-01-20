@@ -40,7 +40,7 @@ class KafkaSubClient:
 
     async def listen(self):
         self.logger.info("Starting kafka listener...")
-        await self.ee_register()
+        self.ee_register()
         self.logger.info("Registering event handlers...")
         consumer = AIOKafkaConsumer(
             *self.kafka_config.subscribe_topics,
@@ -63,7 +63,7 @@ class KafkaSubClient:
 
     async def on_message(self, message: ConsumerRecord):
         try:
-            message.value = msgpack.loads(message.value)
+            message.value = msgpack.unpackb(message.value)
         except Exception as e:
             # msgpack.UnpackException - deprecated, use Exception to catch all errors
             self.logger.exception(f"Unable to deserialize event byte data: {e}")

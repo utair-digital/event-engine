@@ -27,7 +27,7 @@ class DemoObserver(Observer):
         print(f"HANDLED {event.serialize()}")
 
 
-async def register_order_saved_observer():
+def register_order_saved_observer():
     manager = get_event_manager(KAFKA_CONFIG)
     manager.register(
         DemoObserver.observer_id,

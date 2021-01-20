@@ -78,5 +78,5 @@ class Event(BaseEvent):
         return dict(
             topic=self.topic,
             key=self.event_key,
-            value=msgpack.dumps(self.serialize()),
+            value=msgpack.packb(self.serialize()),
         )
