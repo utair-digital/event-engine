@@ -1,16 +1,85 @@
+import msgpack
+import logging
 from abc import ABCMeta
 from abc import abstractmethod
 from typing import Collection, Callable, Dict, Type, List, Union
 
 
-class BaseEvent(metaclass=ABCMeta):
+class KafkaConfig:
+    servers = []
+    subscribe_topics = []
+    service_name = None
+
+    def __init__(self, servers: list, subscribe_topics: list, service_name: str):
+        self.servers = servers
+        self.subscribe_topics = subscribe_topics
+        self.service_name = service_name
+
+
+class KafkaMessage:
     """
-    Абстрактный класс события.
-    Отвечает за передачу данных обработчику события, по сути обычный Data Transfer Object (DTO)
+    DTO для producer.send(**KafkaMessage.build()) / send_and_wait
     """
-    name: str
-    code: int
-    data: object
+    def __init__(
+            self,
+            topic: str,
+            key: str,
+            data: bytes
+    ):
+        self.topic = topic
+        self.key = key
+        self.data = data
+
+    def build(self):
+        return dict(
+            topic=self.topic,
+            key=self.key,
+            value=self.data
+        )
+
+
+class BaseEvent:
+    """
+    Базовый класс события.
+    Отвечает за передачу данных обработчику события
+    """
+    name: str = 'Anonymous event'
+    code: int = 0
+    data: object = None
+
+    is_internal: bool = True        # Флаг, обозначающий, что сообщение должно быть отправлено внутри приложения
+
+    is_published: bool = False      # Флаг, обозначающий, что сообщение было отправлено через шину
+    is_publishable: bool = False    # Флаг, обозначающий, что сообщение должно быть отправлено в кафку
+
+    event_key: str = None           # Ключ события требуется для обработки события по порядку,
+    # события с одинаковым ключем попадут в одну partition в кафке и будут обработаны последовательно
+
+    topic: str = None               # Топик события, на которое должен быть подписан клиент, чтобы его получить
+
+    def serialize(self) -> Dict:
+        raise NotImplementedError()
+
+    def deserialize(self, event: Dict) -> "BaseEvent":
+        raise NotImplementedError()
+
+    def __get_event_key__(self) -> Union[str, None]:
+        """
+        Функция генерации ключа события
+        По дефолту ключа нет, кафка будет посылать события по разным partition round-robin
+        """
+        return None
+
+    @property
+    def kafka_message(self) -> KafkaMessage:
+        """
+        Собирает сообщения для kafka.send()
+        """
+        return KafkaMessage(
+            topic=self.topic,
+            key=self.event_key,
+            data=msgpack.packb(self.serialize())
+        )
 
 
 class BaseObserver(metaclass=ABCMeta):
@@ -54,11 +123,6 @@ class BaseObservable(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def __get_first_observer_instance_index__(self, observer: BaseObserver) -> int:
-        """Поиск первого попавшегося наблюдателя в коллекции по экземпляру класса"""
-        raise NotImplementedError
-
-    @abstractmethod
     async def notify_observers_async(self, event: BaseEvent, async_task: Callable) -> None:
         """Сообщить наблюдателю о наступлении события (обработка событий запустится в celery)"""
         raise NotImplementedError
@@ -69,7 +133,7 @@ class BaseObservable(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class BaseEventManager(metaclass=ABCMeta):
+class BaseEventManager:
     """
     Абстрактный класс менеджера событий
     Отвечает за байндинг событий и обработчиков
@@ -77,17 +141,24 @@ class BaseEventManager(metaclass=ABCMeta):
 
     __binds__: Union[Dict, Collection]
 
+    def __init__(
+            self,
+            kafka_config: KafkaConfig,
+            logger: logging.Logger = logging.getLogger('event_manager')
+    ):
+        self.kafka_config = kafka_config
+        self.__binds__ = dict()
+        self.logger = logger
+
     @abstractmethod
     def register(
             self,
-            observer_id: str,
             events: List[Type[BaseEvent]],
             handler: Union[BaseObserver, Callable[[BaseEvent], None]],
             is_type_check: bool = False,
     ) -> None:
         """
         Байндинг события и его обработчика
-        :param observer_id: Идентификатор обработчика
         :param events: События
         :param handler: Обработчик
         :param is_type_check: Флаг проверки, что два экземпляра одного класса не обрабатывают событие
@@ -106,11 +177,11 @@ class BaseEventManager(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    async def raise_event_async(self, event: BaseEvent, silent: bool = True, async_task: Callable = None) -> None:
+    async def raise_event_celery(self, event: BaseEvent, silent: bool = True, celery_task: Callable = None) -> None:
         """
-        Вызов обработчиков подписанных на событие (обработка событий запустится в background)
+        Вызов обработчиков подписанных на событие (обработка событий запустится в celery с помощью celery_task)
         :param event: Событие
-        :param async_task: Асинхронная функция, в которой запускается обработка события
+        :param celery_task: Асинхронная функция, в которой запускается обработка события
         :param silent: Игнорирование незарегистрированного события. Если значение False и событие незарегистрированно -
             будет брошено исключение, Если значение True отсутсвие незарегистрированного события будет проигнорированно
         """
@@ -148,22 +219,6 @@ class BaseEventManager(metaclass=ABCMeta):
         :param event: Событие
         :param handler: Обработчик
         :param is_type_check: Флаг проверки, что два экземпляра одного класса не обрабатывают событие
-        :return: None
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def event_handler(
-            self,
-            observer_id: str,
-            events: List[Type[BaseEvent]],
-            is_type_check: bool = False,
-    ):
-        """
-        Декоратор, шорткат для байндинга события и обработчика
-        :param events: События
-        :param is_type_check: Флаг проверки, что два экземпляра одного класса не обрабатывают событие
-        :param observer_id: Индентификатор обработчика
         :return: None
         """
         raise NotImplementedError

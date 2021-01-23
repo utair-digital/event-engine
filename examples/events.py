@@ -1,7 +1,7 @@
 from typing import Union
-from event_engine_async import get_event_manager
-from event_engine_async.event import Event
-from event_engine_async.observer import Observer
+from event_engine import get_event_manager
+from event_engine.event import Event
+from event_engine.observer import Observer
 from examples.kafka_settings import KAFKA_CONFIG
 
 
@@ -30,7 +30,6 @@ class DemoObserver(Observer):
 def register_order_saved_observer():
     manager = get_event_manager(KAFKA_CONFIG)
     manager.register(
-        DemoObserver.observer_id,
         [DemoEvent],
         DemoObserver(),
         is_type_check=True

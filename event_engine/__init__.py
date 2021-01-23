@@ -9,7 +9,7 @@ from .event import Event                                # noqa
 from .observer import Observer                          # noqa
 from .observable import Observable                      # noqa
 
-from .kafka_config import KafkaConfig                   # noqa
+from .base import KafkaConfig                           # noqa
 from .kafka_consumer import KafkaSubClient              # noqa
 
 from .event_manager import EventManager

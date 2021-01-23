@@ -5,7 +5,7 @@ from aiokafka import AIOKafkaConsumer, ConsumerRecord
 from .exceptions import BaseEventEngineError
 from .event_manager import EventManager
 from .event import Event
-from .kafka_config import KafkaConfig
+from .base import KafkaConfig
 
 
 class KafkaSubClient:
@@ -84,7 +84,7 @@ class KafkaSubClient:
         try:
             if self.async_raise and self.manager_async_task:
                 self.logger.info("Event raised")
-                return await self.ee.raise_event_async(event, async_task=self.manager_async_task)
+                return await self.ee.raise_event_celery(event, celery_task=self.manager_async_task)
             self.logger.info("Event raised")
             return await self.ee.raise_event(event)
         except (ValueError, TypeError, BaseEventEngineError) as e:

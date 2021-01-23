@@ -1,7 +1,7 @@
 import json
-import sys
-import typing
-from os import path
+from typing import (
+    Dict, List, Callable
+)
 
 from .base import BaseObservable
 from .event import Event
@@ -20,7 +20,7 @@ class Observable(BaseObservable):
     Класс наблюдаемого объекта
     """
 
-    __observers__: typing.List
+    __observers__: List[Dict]
 
     def __init__(self, is_type_check: bool = False):
         """"
@@ -60,14 +60,14 @@ class Observable(BaseObservable):
             raise InvalidEventType("Invalid event type")
         await self.__notify__(event)
 
-    async def notify_observers_async(self, event: Event, async_task: typing.Callable) -> None:
+    async def notify_observers_async(self, event: Event, celery_task: Callable) -> None:
         """Сообщить наблюдателю о наступлении события (обработка событий запустится в celery)"""
         if not isinstance(event, Event):
             raise InvalidEventType("Invalid event type")
-        if not callable(async_task):
-            raise BaseEventEngineError("Invalid async function: {}".format(async_task))
+        if not callable(celery_task):
+            raise BaseEventEngineError("Invalid async function: {}".format(celery_task))
 
-        async_task.delay(json.dumps(event.serialize()))
+        celery_task.delay(json.dumps(event.serialize()))
 
     async def __notify__(self, event: Event) -> None:
         """Оповещаем наблюдателей"""
@@ -93,26 +93,3 @@ class Observable(BaseObservable):
             return self.__observers__.index(observers[0])
         else:
             return -1
-
-    @staticmethod
-    def get_relative_observer_id(observer: typing.Union[Observer, typing.Callable[[Event], None]]) -> str:
-        """
-        Возвращает относительный путь (отностиельно папки core/modules/event_engine) к модулю обработчика.
-        Если вы наследуетесь от текущего класса (Observable) - знайте, этот метод (get_relative_observer_id)
-        НЕЛЬЗЯ переопределять. Он используется как идентификатор для поиска необходимой спецификации в БД.
-        """
-        # относительный путь к обработчику используется чтобы не "светить" структуру проекта.
-        relative_observer_module_path = path.splitext(
-            # получаем относительный путь от пакета event_engine к *.py-файлу обработчика
-            path.relpath(
-                sys.modules[observer.__module__].__file__,  # полный путь к модулю (*.py файлу) обработчика
-                path.dirname(__file__)  # полный путь к ПАПКЕ текущего файла, т.е./path/to/core/modules/event_engine
-            )
-        )[0]  # убираем '.py' расширение файла обработчика
-
-        if callable(observer):
-            observer_name = observer.__name__
-        else:
-            observer_name = observer.__class__.__name__
-
-        return '{}.{}'.format(relative_observer_module_path, observer_name)
