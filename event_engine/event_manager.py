@@ -1,24 +1,18 @@
-import logging
-
 import types
 from typing import List, Type, Dict, Callable, Union
-from copy import deepcopy
 from aiokafka.errors import KafkaError
 
-from .base import BaseEventManager
+from .base import BaseEventManager, KafkaMessage, KafkaConfig
 from .event import Event
 from .observable import Observable
 from .observer import Observer
-from .kafka_config import KafkaConfig
 from .exceptions import (
     InvalidObserverIDError,
     EventNotRegisteredError,
     InvalidEventType,
     InvalidObserverType,
 )
-from .kafka_producer import get_kafka_producer
-
-logger = logging.getLogger('event_manager')
+from .kafka_producer import start_kafka_producer
 
 
 class EventManager(BaseEventManager):
@@ -27,14 +21,8 @@ class EventManager(BaseEventManager):
     Отвечает за байндинг событий и обработчиков
     """
 
-    __binds__ = dict()
-
-    def __init__(
-            self,
-            kafka_config: KafkaConfig
-    ):
-        self.kafka_config = kafka_config
-        self.__binds__ = dict()
+    def __init__(self, kafka_config: KafkaConfig):
+        super().__init__(kafka_config)
 
     class FakeObserver(Observer):
         """
@@ -55,23 +43,18 @@ class EventManager(BaseEventManager):
 
     def register(
             self,
-            observer_id: str,
             events: List[Type[Event]],
-            handler: Union[Observer, Callable[[Event], None]],
+            handler: Observer,
             is_type_check: bool = False,
     ) -> None:
         """
         Байндинг события и его обработчика
-        :param observer_id: Идентификатор обработчика. Используется для поиска спецификации для этого обработчика. Если
-            observer_id не передан - будет использоваться идентификация на релятивные путях. Данный параметр будет
-            обрабатываться только если для переданного handler-a справедливо callable(handler) == True, т.е.
-            handler - обычная def функция. Если handler экземпляр класса Observer, в качестве observer_id будет
-            использоваться handler.observer_id
         :param events: События
         :param handler: Обработчик
         :param is_type_check: Флаг проверки, что два экземпляра одного класса не обрабатывают событие
         :return: None
         """
+        observer_id = handler.observer_id
 
         if not observer_id or not isinstance(observer_id, str):
             # observer_id должен быть указан при регистрации
@@ -84,9 +67,13 @@ class EventManager(BaseEventManager):
 
         for event in events:
             if not issubclass(event, Event):
-                raise InvalidEventType("Invalid event type")
+                err = InvalidEventType("Invalid event type")
+                self.logger.exception(err)
+                raise err
             if not (isinstance(handler, Observer) or callable(handler)):
-                raise InvalidObserverType("Invalid handler type")
+                err = InvalidObserverType("Invalid handler type")
+                self.logger.exception(err)
+                raise err
             self.__bind__(event, handler, is_type_check)
 
     def __bind__(
@@ -114,51 +101,52 @@ class EventManager(BaseEventManager):
             будет брошено исключение, Если значение True отсутсвие незарегистрированного события будет проигнорированно
         :return:
         """
-        await self.__raise_event__(event=event, is_async=False, silent=silent)
+        await self.__raise_event__(event=event, celery=False, silent=silent)
 
-    async def raise_event_async(
+    async def raise_event_celery(
             self,
             event: Event,
             silent: bool = True,
-            async_task: Callable = None
+            celery_task: Callable = None
     ) -> None:
         """
-        Вызов обработчиков подписанных на событие (обработка событий запустится в background)
+        Вызов обработчиков подписанных на событие (обработка событий запустится в celery с помощью celery_task)
         :param event: Событие
-        :param async_task: Асинхронная функция, в которой запускается обработка события
+        :param celery_task: Celery task функция, в которой запускается обработка события
         :param silent: Игнорирование незарегистрированного события. Если значение False и событие незарегистрированно -
             будет брошено исключение, Если значение True отсутсвие незарегистрированного события будет проигнорированно
         """
-        await self.__raise_event__(event=event, is_async=True, silent=silent, async_task=async_task)
+        await self.__raise_event__(event=event, celery=True, silent=silent, celery_task=celery_task)
 
     async def __raise_event__(
             self,
             event: Event,
-            is_async: bool = False,
+            celery: bool = False,
             silent: bool = True,
-            async_task: Callable = None
+            celery_task: Callable = None
     ) -> None:
         """
          Вызов обработчиков подписанных на событие
         :param event: Событие
-        :param is_async: Флаг запуска обработки событий в асинхронном режиме
-        :param async_task: Асинхронная функция, в которой запускается обработка события
+        :param celery: Флаг запуска обработки событий в celery task
+        :param celery_task: Celery task функция, в которой запускается обработка события
         :param silent: Игнорирование незарегистрированного события. Если значение False и событие незарегистрированно -
             будет брошено исключение, Если значение True отсутсвие незарегистрированного события будет проигнорированно
         """
         event_type = type(event)
-        initial_event: event_type = deepcopy(event)
 
         async def __raise__():
-            if all([is_async, async_task]):
+            if all([celery, celery_task]):
                 # отправка события в селери таску
-                self.__binds__[event_type].notify_observers_async(initial_event, async_task)
+                self.__binds__[event_type].notify_observers_async(event, celery_task)
             else:
                 # вызов обработчика в текущем потоке
-                await self.__binds__[event_type].notify_observers(initial_event)
+                await self.__binds__[event_type].notify_observers(event)
 
         if event_type not in self.__binds__.keys() and not silent:
-            raise EventNotRegisteredError("Raised event is not registered")
+            err = EventNotRegisteredError("Raised event is not registered")
+            self.logger.exception(err)
+            raise err
 
         if event_type in self.__binds__.keys():
             if event.is_published:
@@ -169,8 +157,9 @@ class EventManager(BaseEventManager):
                 try:
                     await self.__send_to_kafka_bus(event)
                 except Exception as e:
-                    # TODO Залогировать
-                    pass
+                    self.logger.exception(e)
+            if event.is_internal:
+                await __raise__()
 
             if not event.is_internal:
                 # обработчик не нуждается в вызове внутри приложения
@@ -178,45 +167,19 @@ class EventManager(BaseEventManager):
             await __raise__()
 
     async def __send_to_kafka_bus(self, event: Event) -> None:
-        producer = await get_kafka_producer(config=self.kafka_config)
+        producer = await start_kafka_producer(config=self.kafka_config)
         try:
             # Ставим флаг, что событие было опубликовано в кафке,
             # таким образом оно не будет опубликовано на клиете еще раз
             event.is_published = True
-            await producer.send_and_wait(**event.build_for_kafka())
-        except KafkaError:
+            await producer.send_and_wait(**event.kafka_message.build())
+        except KafkaError as e:
             event.is_published = False
+            self.logger.exception(e)
 
     def un_register(self, event: Event, handler: Union[Observer, Callable]) -> None:
         """Удаление байндинга обработчика и события"""
         raise NotImplementedError  # TODO: добавить имплементацию
-
-    def event_handler(
-            self,
-            observer_id: str,
-            events: List[Type[Event]],
-            is_type_check: bool = True,
-    ):
-        """
-        Декоратор, шорткат для байндинга события и обработчика
-        :param observer_id: Идентификатор обработчика. Используется для поиска спецификации для этого обработчика. Если
-            observer_id не передан - будет использоваться идентификация на релятивные путях.
-        :param events: События
-        :param is_type_check: Флаг проверки, что два экземпляра одного класса не обрабатывают событие. Т.к.
-            event_handler - это декоратор, is_type_check по умолчанию для него True
-        :return: None
-        """
-        if not observer_id or not isinstance(observer_id, str):
-            # observer_id должен быть указан при регистрации
-            raise InvalidObserverIDError('Некорректный observer_id: {}'.format(observer_id))
-
-        def handler_wrapper(handler: Callable[[Event], None]):
-            if not callable(handler):
-                raise InvalidObserverType("Invalid handler type")
-            self.register(observer_id, events, handler, is_type_check)
-            return handler
-
-        return handler_wrapper
 
     def deserialize_event(self, event: Dict) -> Event:
         """Среди зарегестрированных событий ищет тип serialized_event-а
@@ -224,4 +187,6 @@ class EventManager(BaseEventManager):
         for event_instance in list(self.__binds__.keys()):
             if str(event_instance.__name__) == event['type']:
                 return event_instance.deserialize(event)
-        raise EventNotRegisteredError('Event "{}" is not registered'.format(event['type']))
+        err = EventNotRegisteredError('Event "{}" is not registered'.format(event['type']))
+        self.logger.exception(err)
+        raise err
