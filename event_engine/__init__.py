@@ -1,7 +1,7 @@
 """
 Модуль движка соытий
 """
-from typing import Callable, Optional
+from typing import Optional
 
 from .event import Event                                # noqa
 from .observer import Observer                          # noqa
