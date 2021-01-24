@@ -10,19 +10,17 @@ from .base import KafkaConfig
 
 class KafkaSubClient:
 
+    _consumer: AIOKafkaConsumer
+
     def __init__(
             self,
             event_manager: EventManager,
-            event_register_function: Callable,
             kafka_config: KafkaConfig,
             async_raise: bool = False,
             manager_async_task: callable = None,
             logger: logging.Logger = logging.getLogger('KafkaSubClient'),
     ):
         """
-        :param event_register_function: Функция регистрации обработчик, на которые будет реагировать EventManager
-        если обработчик не зарегистрирован или на этапе инициализации и регистрации произошла ошибка - такое событие
-        не сможет обработать EventManager
         :param event_manager: Менеджер событий
         :param async_raise: Каким образом рейзить событие, блокировка/celery
         :param manager_async_task: Таска для обработки менеджером событий асинхронно
@@ -30,7 +28,6 @@ class KafkaSubClient:
 
         self.ee = event_manager
         self.kafka_config = kafka_config
-        self.ee_register = event_register_function
         self.logger = logger
         self.async_raise = async_raise
         self.manager_async_task = manager_async_task
@@ -40,26 +37,22 @@ class KafkaSubClient:
 
     async def listen(self):
         self.logger.info("Starting kafka listener...")
-        self.ee_register()
         self.logger.info("Registering event handlers...")
-        consumer = AIOKafkaConsumer(
+        self._consumer = AIOKafkaConsumer(
             *self.kafka_config.subscribe_topics,
             bootstrap_servers=self.kafka_config.servers,
             group_id=self.kafka_config.service_name
         )
         # Get cluster layout and topic/partition allocation
         self.logger.info("Getting cluster layout and topic/partition allocation..")
-        await consumer.start()
-        try:
-            self.logger.info("Waiting for new messages..")
-            async for msg in consumer:
-                try:
-                    self.logger.info("Got a new message")
-                    await self.on_message(msg)
-                except BaseEventEngineError:
-                    pass
-        except KeyboardInterrupt:
-            await consumer.stop()
+        await self._consumer.start()
+        self.logger.info("Waiting for new messages..")
+        async for msg in self._consumer:
+            try:
+                self.logger.info("Got a new message")
+                await self.on_message(msg)
+            except BaseEventEngineError:
+                pass
 
     async def on_message(self, message: ConsumerRecord):
         try:
@@ -90,3 +83,6 @@ class KafkaSubClient:
         except (ValueError, TypeError, BaseEventEngineError) as e:
             self.logger.exception(f"Unable to raise event: {e}")
             return
+
+    async def stop(self):
+        await self._consumer.stop()

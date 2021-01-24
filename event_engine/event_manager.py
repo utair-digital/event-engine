@@ -2,7 +2,7 @@ import types
 from typing import List, Type, Dict, Callable, Union
 from aiokafka.errors import KafkaError
 
-from .base import BaseEventManager, KafkaMessage, KafkaConfig
+from .base import BaseEventManager, KafkaConfig
 from .event import Event
 from .observable import Observable
 from .observer import Observer
@@ -158,9 +158,6 @@ class EventManager(BaseEventManager):
                     await self.__send_to_kafka_bus(event)
                 except Exception as e:
                     self.logger.exception(e)
-            if event.is_internal:
-                await __raise__()
-
             if not event.is_internal:
                 # обработчик не нуждается в вызове внутри приложения
                 return
