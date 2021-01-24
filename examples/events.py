@@ -20,7 +20,5 @@ class DemoObserver(Observer):
     """
     Обработчик события
     """
-    observer_id = '__DemoSubscriber__'
-
     async def handle_event(self, event: DemoEvent):
         print(f"HANDLED {event.serialize()}")
