@@ -1,16 +1,35 @@
+import asyncio
 import logging
-from event_engine import run_kafka_consumer
 
-from examples.events import register_order_saved_observer
-from examples.kafka_settings import KAFKA_CONFIG
+from event_engine import run_kafka_consumer, get_event_manager
+from event_engine import KafkaConfig, EventManager
 
+from examples.events import DemoObserver, DemoEvent1, DemoEvent2
 
 log = logging.getLogger("KafkaSubClient")
 log.setLevel("INFO")
 log.addHandler(logging.StreamHandler())
 
-run_kafka_consumer(
-    KAFKA_CONFIG,
-    register_order_saved_observer,
-    log
-)
+
+async def consume():
+    kafka_config = KafkaConfig(
+        servers=['localhost:29092'],
+        subscribe_topics=['demo_topic'],
+        service_name="example_service"
+    )
+
+    # Регистрируем
+    em: EventManager = get_event_manager(kafka_config)
+    em.register(
+        [DemoEvent1, DemoEvent2],
+        DemoObserver(),
+        is_type_check=True
+    )
+
+    # Обрабатываем
+    await run_kafka_consumer(kafka_config)
+
+try:
+    asyncio.run(consume())
+except KeyboardInterrupt:
+    pass

@@ -44,8 +44,8 @@ class Event(BaseEvent):
         ev = cls(**event['data'])
         return ev
 
-    def __get_event_key__(self) -> Union[str, None]:
+    def __get_event_key__(self) -> Union[bytes, None]:
         """
         Ключ события позволяет обрабатывать эвенты с одинаковым ключём по порядку
         """
-        return self.topic
+        return bytes(1)
