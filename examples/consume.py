@@ -1,18 +1,14 @@
 import asyncio
-import logging
 
 from event_engine import run_kafka_consumer, get_event_manager
 from event_engine import KafkaConfig, EventManager
 
 from examples.events import DemoObserver, DemoEvent1, DemoEvent2
 
-log = logging.getLogger("KafkaSubClient")
-log.setLevel("INFO")
-log.addHandler(logging.StreamHandler())
-
 
 async def consume():
     kafka_config = KafkaConfig(
+        debug_level='DEBUG',
         servers=['localhost:29092'],
         subscribe_topics=['demo_topic'],
         service_name="example_service"

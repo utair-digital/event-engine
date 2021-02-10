@@ -6,11 +6,13 @@ from typing import Collection, Callable, Dict, Type, List, Union
 
 
 class KafkaConfig:
+    debug_level = 'ERROR'
     servers = []
     subscribe_topics = []
     service_name = None
 
-    def __init__(self, servers: list, subscribe_topics: list, service_name: str):
+    def __init__(self, debug_level: str, servers: list, subscribe_topics: list, service_name: str):
+        self.debug_level = debug_level
         self.servers = servers
         self.subscribe_topics = subscribe_topics
         self.service_name = service_name
