@@ -1,5 +1,6 @@
 import msgpack
 import logging
+from copy import deepcopy
 from abc import ABCMeta
 from abc import abstractmethod
 from typing import Collection, Callable, Dict, Type, List, Union
@@ -77,10 +78,11 @@ class BaseEvent:
         """
         Собирает сообщения для kafka.send()
         """
+        _copy = deepcopy(self)
         return KafkaMessage(
-            topic=self.topic,
-            key=self.event_key,
-            data=msgpack.packb(self.serialize())
+            topic=_copy.topic,
+            key=_copy.event_key,
+            data=msgpack.packb(_copy.serialize())
         )
 
 
