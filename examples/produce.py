@@ -3,20 +3,16 @@
 Обработка ошибок в лупе
 Публикация события внутри приложения
 """
-import logging
 import uuid
 import asyncio
 from event_engine import get_event_manager
 from event_engine import EventManager, KafkaConfig
 from examples.events import DemoObserver, DemoEvent1, DemoEvent2
 
-log = logging.getLogger("KafkaSubClient")
-log.setLevel("INFO")
-log.addHandler(logging.StreamHandler())
-
 
 async def raise_events():
     kafka_config = KafkaConfig(
+        debug_level='DEBUG',
         servers=['localhost:29092'],
         subscribe_topics=['demo_topic'],
         service_name="example_service"

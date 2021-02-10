@@ -1,11 +1,11 @@
 import msgpack
 import logging
-from typing import Callable
 from aiokafka import AIOKafkaConsumer, ConsumerRecord
 from .exceptions import BaseEventEngineError
 from .event_manager import EventManager
 from .event import Event
 from .base import KafkaConfig
+from .log_config import setup_logger
 
 
 class KafkaSubClient:
@@ -36,6 +36,7 @@ class KafkaSubClient:
             raise ValueError("Celery async task must be provided for async event raising")
 
     async def listen(self):
+        setup_logger(self.kafka_config)
         self.logger.info("Starting kafka listener...")
         self.logger.info("Registering event handlers...")
         self._consumer = AIOKafkaConsumer(
