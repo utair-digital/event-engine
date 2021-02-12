@@ -11,12 +11,21 @@ class KafkaConfig:
     servers = []
     subscribe_topics = []
     service_name = None
+    metadata_max_age_ms = 10 * 1000
 
-    def __init__(self, debug_level: str, servers: list, subscribe_topics: list, service_name: str):
+    def __init__(
+            self,
+            debug_level: str,
+            servers: list,
+            subscribe_topics: list,
+            service_name: str,
+            metadata_max_age_mx: int = 10 * 1000
+    ):
         self.debug_level = debug_level
         self.servers = servers
         self.subscribe_topics = subscribe_topics
         self.service_name = service_name
+        self.metadata_max_age_ms = metadata_max_age_mx
 
 
 class KafkaMessage:

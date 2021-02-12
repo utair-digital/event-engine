@@ -42,7 +42,8 @@ class KafkaSubClient:
         self._consumer = AIOKafkaConsumer(
             *self.kafka_config.subscribe_topics,
             bootstrap_servers=self.kafka_config.servers,
-            group_id=self.kafka_config.service_name
+            group_id=self.kafka_config.service_name,
+            metadata_max_age_ms=self.kafka_config.metadata_max_age_ms
         )
         # Get cluster layout and topic/partition allocation
         self.logger.info("Getting cluster layout and topic/partition allocation..")

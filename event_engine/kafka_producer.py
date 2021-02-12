@@ -14,7 +14,10 @@ async def start_kafka_producer(config: KafkaConfig) -> AIOKafkaProducer:
     global _PRODUCER
     if not _PRODUCER:
         setup_logger(config)
-        _PRODUCER = AIOKafkaProducer(bootstrap_servers=config.servers)
+        _PRODUCER = AIOKafkaProducer(
+            bootstrap_servers=config.servers,
+            metadata_max_age_ms=config.metadata_max_age_ms
+        )
         await _PRODUCER.start()
     return _PRODUCER
 
