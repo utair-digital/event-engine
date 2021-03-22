@@ -138,7 +138,7 @@ class EventManager(BaseEventManager):
         async def __raise__():
             if all([celery, celery_task]):
                 # отправка события в селери таску
-                self.__binds__[event_type].notify_observers_async(event, celery_task)
+                await self.__binds__[event_type].notify_observers_async(event, celery_task)
             else:
                 # вызов обработчика в текущем потоке
                 await self.__binds__[event_type].notify_observers(event)
