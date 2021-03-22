@@ -35,9 +35,9 @@ class Event(BaseEvent):
 
     def serialize(self) -> Dict:
         try:
-            data = self.serialize()
+            data = self.data.serialize()
         except Exception:
-            data = self.__dict__
+            data = self.data.__dict__
 
         return {
             'type': str(self.__class__.__name__),
