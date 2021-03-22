@@ -34,14 +34,9 @@ class Event(BaseEvent):
             raise EventBuildingError("Event must be at least one of is_internal/is_publishable")
 
     def serialize(self) -> Dict:
-        try:
-            data = self.data.serialize()
-        except Exception:
-            data = self.data.__dict__
-
         return {
             'type': str(self.__class__.__name__),
-            'data': data,
+            'data': self.__dict__,
         }
 
     @classmethod
