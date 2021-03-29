@@ -12,7 +12,7 @@ from .exceptions import (
     InvalidEventType,
     InvalidObserverType,
 )
-from .kafka_producer import start_kafka_producer
+from .kafka_producer import get_producer
 
 
 class EventManager(BaseEventManager):
@@ -164,7 +164,7 @@ class EventManager(BaseEventManager):
             await __raise__()
 
     async def __send_to_kafka_bus(self, event: Event) -> None:
-        producer = await start_kafka_producer(config=self.kafka_config)
+        producer = await get_producer(config=self.kafka_config)
         try:
             # Ставим флаг, что событие было опубликовано в кафке,
             # таким образом оно не будет опубликовано на клиете еще раз
