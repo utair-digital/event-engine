@@ -6,11 +6,16 @@ from .log_config import setup_logger
 _PRODUCER: Optional[AIOKafkaProducer] = None
 
 
-async def start_kafka_producer(config: KafkaConfig) -> AIOKafkaProducer:
+async def start_kafka_producer(config: KafkaConfig):
     """
     Получение продюссера
     Нужно вызвать при старте приложения
     """
+    prod = await get_producer(config)
+    await prod.start()
+
+
+async def get_producer(config: KafkaConfig) -> AIOKafkaProducer:
     global _PRODUCER
     if not _PRODUCER:
         setup_logger(config)
@@ -18,8 +23,7 @@ async def start_kafka_producer(config: KafkaConfig) -> AIOKafkaProducer:
             bootstrap_servers=config.servers,
             metadata_max_age_ms=config.metadata_max_age_ms
         )
-        await _PRODUCER.start()
-    return _PRODUCER
+    return await get_producer(config)
 
 
 async def stop_kafka_producer():
