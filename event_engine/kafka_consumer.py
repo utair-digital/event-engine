@@ -1,6 +1,6 @@
 import msgpack
 import logging
-from aiokafka import AIOKafkaConsumer, ConsumerRecord
+from aiokafka import AIOKafkaConsumer, ConsumerRecord, ConsumerStoppedError
 from .exceptions import BaseEventEngineError
 from .event_manager import EventManager
 from .event import Event
@@ -55,6 +55,9 @@ class KafkaSubClient:
                 await self.on_message(msg)
             except BaseEventEngineError:
                 pass
+            except ConsumerStoppedError:
+                self.logger.info("Kafka consumer stopped!")
+                break
 
     async def on_message(self, message: ConsumerRecord):
         try:
@@ -87,4 +90,5 @@ class KafkaSubClient:
             return
 
     async def stop(self):
+        self.logger.info("Kafka consumer graceful shutdown...")
         await self._consumer.stop()
