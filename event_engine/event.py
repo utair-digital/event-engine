@@ -16,7 +16,8 @@ class Event(BaseEvent):
             is_published: bool = False,
             is_internal: bool = False,
             name: str = None,
-            code: int = None
+            code: int = None,
+            **kwargs
     ):
         self.data = data
         self.name = name
