@@ -8,7 +8,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="event_engine_async",
-    version="0.8.7",
+    version="0.8.10",
     author="utair",
     description="Asynchronous Event engine with kafka bus",
     long_description=long_description,
