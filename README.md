@@ -1,6 +1,4 @@
-# Asynchronous EventEngine with kafka buss
-
-## Примеры использования в папке examples
+# Asynchronous EventEngine with kafka bus
 
 # Requirements
 
@@ -13,7 +11,7 @@
 - ssh: ``pip install git+ssh://git@gitlab.utair.ru/digital/repository/event-engine-async.git@1.0.0#egg=event_engine_async
 ``
   
-## Usage (см. examples)
+## Usage (см. папку examples)
 
 ### Standalone (слушать сигналы, Graceful Shutdown):
 ``` python
