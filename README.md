@@ -60,6 +60,6 @@
         kafka_config=kafka_conf,
     )
     
-    application.on_startup.append(client.listen())
-    application.on_startup.append(client.stop())
+    application.on_startup.append(client.listen)
+    application.on_cleanup.append(client.stop)
 ```
