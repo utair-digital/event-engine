@@ -25,9 +25,11 @@ def get_event_manager(kafka_conf: KafkaConfig) -> EventManager:
 
 async def run_kafka_consumer(
         kafka_conf: KafkaConfig,
+        handle_signals: bool = False
 ):
     client = KafkaSubClient(
         event_manager=get_event_manager(kafka_conf),
         kafka_config=kafka_conf,
+        handle_signals=handle_signals
     )
     await client.listen()

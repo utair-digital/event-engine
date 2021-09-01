@@ -6,9 +6,10 @@ from .event_manager import EventManager
 from .event import Event
 from .base import KafkaConfig
 from .log_config import setup_logger
+from .shutdownable import ShutDownable
 
 
-class KafkaSubClient:
+class KafkaSubClient(ShutDownable):
 
     _consumer: AIOKafkaConsumer
 
@@ -18,6 +19,7 @@ class KafkaSubClient:
             kafka_config: KafkaConfig,
             async_raise: bool = False,
             manager_async_task: callable = None,
+            handle_signals: bool = False,
             logger: logging.Logger = logging.getLogger('KafkaSubClient'),
     ):
         """
@@ -34,6 +36,11 @@ class KafkaSubClient:
 
         if self.async_raise and not self.manager_async_task:
             raise ValueError("Celery async task must be provided for async event raising")
+        if handle_signals:
+            super().__init__(logger=logger)
+
+    async def _on_shutdown(self):
+        await self.stop()
 
     async def listen(self):
         setup_logger(self.kafka_config)
@@ -49,15 +56,16 @@ class KafkaSubClient:
         self.logger.info("Getting cluster layout and topic/partition allocation..")
         await self._consumer.start()
         self.logger.info("Waiting for new messages..")
-        async for msg in self._consumer:
-            try:
-                self.logger.info("Got a new message")
-                await self.on_message(msg)
-            except BaseEventEngineError:
-                pass
-            except ConsumerStoppedError:
-                self.logger.info("Kafka consumer stopped!")
-                break
+
+        try:
+            async for msg in self._consumer:
+                try:
+                    self.logger.info("Got a new message")
+                    await self.on_message(msg)
+                except BaseEventEngineError:
+                    pass
+        except ConsumerStoppedError:
+            self.logger.info("Kafka consumer stopped!")
 
     async def on_message(self, message: ConsumerRecord):
         try:
