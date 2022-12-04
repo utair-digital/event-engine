@@ -1,7 +1,6 @@
-from abc import ABC, abstractmethod
-import sys
-import signal
 import asyncio
+import signal
+from abc import ABC, abstractmethod
 
 
 class ShutDownable(ABC):

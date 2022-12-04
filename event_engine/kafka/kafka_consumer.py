@@ -1,12 +1,15 @@
-import msgpack
 import logging
+from typing import Optional
+
+import msgpack
 from aiokafka import AIOKafkaConsumer, ConsumerRecord, ConsumerStoppedError
-from .exceptions import BaseEventEngineError
-from .event_manager import EventManager
-from .event import Event
+
+from event_engine.event import Event
+from event_engine.event_manager import EventManager
+from event_engine.exceptions import BaseEventEngineError
+from event_engine.shutdownable import ShutDownable
 from .base import KafkaConfig
-from .log_config import setup_logger
-from .shutdownable import ShutDownable
+from ..base import BaseDeserializer
 
 
 class KafkaSubClient(ShutDownable):
@@ -14,28 +17,22 @@ class KafkaSubClient(ShutDownable):
     _consumer: AIOKafkaConsumer
 
     def __init__(
-            self,
-            event_manager: EventManager,
-            kafka_config: KafkaConfig,
-            async_raise: bool = False,
-            manager_async_task: callable = None,
-            handle_signals: bool = False,
-            logger: logging.Logger = logging.getLogger('KafkaSubClient'),
+        self,
+        event_manager: EventManager,
+        kafka_config: KafkaConfig,
+        handle_signals: bool = False,
+        deserializer: Optional[BaseDeserializer] = None,
+        logger: logging.Logger = logging.getLogger("kafka.sub.client"),
     ):
         """
         :param event_manager: Менеджер событий
-        :param async_raise: Каким образом рейзить событие, блокировка/celery
-        :param manager_async_task: Таска для обработки менеджером событий асинхронно
         """
 
         self.ee = event_manager
         self.kafka_config = kafka_config
         self.logger = logger
-        self.async_raise = async_raise
-        self.manager_async_task = manager_async_task
+        self.deserializer = deserializer
 
-        if self.async_raise and not self.manager_async_task:
-            raise ValueError("Celery async task must be provided for async event raising")
         if handle_signals:
             super().__init__(logger=logger)
 
@@ -43,14 +40,13 @@ class KafkaSubClient(ShutDownable):
         await self.stop()
 
     async def listen(self):
-        setup_logger(self.kafka_config)
         self.logger.info("Starting kafka listener...")
         self.logger.info("Registering event handlers...")
         self._consumer = AIOKafkaConsumer(
             *self.kafka_config.subscribe_topics,
             bootstrap_servers=self.kafka_config.servers,
             group_id=self.kafka_config.service_name,
-            metadata_max_age_ms=self.kafka_config.metadata_max_age_ms
+            metadata_max_age_ms=self.kafka_config.metadata_max_age_ms,
         )
         # Get cluster layout and topic/partition allocation
         self.logger.info("Getting cluster layout and topic/partition allocation..")
@@ -76,7 +72,10 @@ class KafkaSubClient(ShutDownable):
             return
 
         try:
-            event: Event = self.ee.deserialize_event(message.value)
+            event_data = message.value
+            if self.deserializer is not None:
+                event_data = self.deserializer.deserialize(event_data)
+            event: Event = self.ee.lookup_event(event_data)
         except BaseEventEngineError as e:
             self.logger.exception(f"Unable to deserialize event {e}")
             return
@@ -88,10 +87,6 @@ class KafkaSubClient(ShutDownable):
             return
 
         try:
-            if self.async_raise and self.manager_async_task:
-                self.logger.info("Event raised")
-                return await self.ee.raise_event_celery(event, celery_task=self.manager_async_task)
-            self.logger.info("Event raised")
             return await self.ee.raise_event(event)
         except (ValueError, TypeError, BaseEventEngineError) as e:
             self.logger.exception(f"Unable to raise event: {e}")

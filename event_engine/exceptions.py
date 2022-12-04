@@ -24,3 +24,7 @@ class InvalidEventType(BaseEventEngineError):
 
 class EventBuildingError(BaseEventEngineError):
     pass
+
+
+class BusNotDefinedError(BaseEventEngineError):
+    pass
