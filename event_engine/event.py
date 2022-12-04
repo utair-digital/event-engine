@@ -1,52 +1,57 @@
-from typing import Union, Dict
-from .base import BaseEvent
+from typing import Generic, TypeVar, Optional
+
+from pydantic import BaseModel, Field
+from pydantic.generics import GenericModel
+
 from .exceptions import EventBuildingError
 
+T = TypeVar("T", bound=BaseModel)
 
-class Event(BaseEvent):
+
+class EventMeta(BaseModel):
+    version: str = "2.0"
+    trace: Optional[str] = None
+
+
+class Event(GenericModel, Generic[T]):
     """
-    Класс события.
-    Отвечает за передачу данных обработчику события, либо в шину кафки
+    common event
     """
 
-    def __init__(
-            self,
-            data: object,
-            event_key: str = None,
-            is_published: bool = False,
-            is_internal: bool = False,
-            name: str = None,
-            code: int = None,
-            **kwargs
-    ):
-        self.data = data
-        self.name = name
-        self.code = code
-        if not self.topic and self.is_published:
+    name: str = ""
+    topic: Optional[str] = None
+    data: T
+    meta: EventMeta = Field(default=EventMeta())
+
+    event_key: Optional[str] = None
+    is_published: Optional[bool] = False
+    is_internal: Optional[bool] = False
+    is_publishable: Optional[bool] = False
+
+    def __init__(self, **kwargs):
+        topic = kwargs.get("topic", None) or self.__fields__["topic"].default
+        is_internal = kwargs.get("is_internal", None) or self.__fields__["is_internal"].default
+        is_publishable = kwargs.get("is_publishable", None) or self.__fields__["is_publishable"].default
+
+        is_published = kwargs.get("is_published", None) or self.__fields__["is_published"].default
+
+        if not self.__fields__["name"].default and not kwargs.get("name"):
+            kwargs.update({"name": self.__class__.__name__})
+
+        if not topic and is_published:
             raise EventBuildingError("Publishable event must contain topic")
-        self.is_published = is_published
-        self.is_internal = is_internal or self.is_internal
-        self.event_key = event_key if event_key else self.__get_event_key__()
 
-        if not any([
-            self.is_publishable,
-            self.is_internal
-        ]):
+        if not any([is_publishable, is_internal]):
             raise EventBuildingError("Event must be at least one of is_internal/is_publishable")
 
-    def serialize(self) -> Dict:
-        return {
-            'type': str(self.__class__.__name__),
-            'data': self.__dict__,
-        }
+        super().__init__(**kwargs)
+
+    def get_event_key(self) -> Optional[bytes]:
+        """
+        event uniquid key
+        """
+        return None
 
     @classmethod
-    def deserialize(cls, event: Dict):
-        ev = cls(**event['data'])
-        return ev
-
-    def __get_event_key__(self) -> Union[bytes, None]:
-        """
-        Ключ события позволяет обрабатывать эвенты с одинаковым ключём по порядку
-        """
-        return bytes(1)
+    def get_default_name(cls):
+        return cls.__fields__["name"].default

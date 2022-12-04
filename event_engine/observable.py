@@ -1,41 +1,33 @@
-import json
-from typing import (
-    Dict, List, Callable
-)
+from typing import Dict, List
 
 from .base import BaseObservable
 from .event import Event
-from .observer import Observer
-
 from .exceptions import (
-    BaseEventEngineError,
     ObserverAlreadyRegistered,
     InvalidObserverType,
     InvalidEventType,
 )
+from .observer import Observer
 
 
 class Observable(BaseObservable):
-    """
-    Класс наблюдаемого объекта
-    """
 
     __observers__: List[Dict]
 
     def __init__(self, is_type_check: bool = False):
-        """"
-        :param is_type_check: Флаг проверки, что два экземпляра одного класса не обрабатывают событие
+        """ "
+        :param is_type_check: Check duplicate handlers
         """
         self.is_type_check = is_type_check
         self.__observers__ = list()
 
     def add_observer(
-            self,
-            observer: Observer,
+        self,
+        observer: Observer,
     ) -> None:
         """
-        Добавить наблюдателя
-        :param observer: Наблюдатель
+        Add observer
+        :param observer: Observer
         :return:
         """
         if not isinstance(observer, Observer):
@@ -47,7 +39,7 @@ class Observable(BaseObservable):
         self.__observers__.append(dict(observer=observer))
 
     def remove_observer(self, observer: Observer) -> None:
-        """Удалить наблюдателя"""
+        """remove observer"""
         if not isinstance(observer, Observer):
             raise InvalidObserverType("Invalid observer type")
         observer_index = self.__get_first_observer_instance_index__(observer)
@@ -55,27 +47,18 @@ class Observable(BaseObservable):
             self.__observers__.pop(observer_index)
 
     async def notify_observers(self, event: Event) -> None:
-        """Сообщить наблюдателю о наступлении события"""
+        """send event to observers"""
         if not isinstance(event, Event):
             raise InvalidEventType("Invalid event type")
         await self.__notify__(event)
 
-    async def notify_observers_async(self, event: Event, celery_task: Callable) -> None:
-        """Сообщить наблюдателю о наступлении события (обработка событий запустится в celery)"""
-        if not isinstance(event, Event):
-            raise InvalidEventType("Invalid event type")
-        if not callable(celery_task):
-            raise BaseEventEngineError("Invalid async function: {}".format(celery_task))
-
-        celery_task.delay(json.dumps(event.serialize()))
-
     async def __notify__(self, event: Event) -> None:
-        """Оповещаем наблюдателей"""
+        """send event to observers"""
         for observer in self.__observers__:
-            await observer['observer'].handle_event(event)
+            await observer["observer"].handle_event(event)
 
     def __get_first_observer_instance_index__(self, observer: Observer) -> int:
-        """Поиск первого попавшегося наблюдателя в коллекции по экземпляру класса"""
+        """look up firs observer"""
         observers = list(filter(lambda x: x["observer"] == observer, self.__observers__))
         if observers:
             return self.__observers__.index(observers[0])
@@ -83,11 +66,13 @@ class Observable(BaseObservable):
             return -1
 
     def __get_first_observer_type_index__(self, observer: Observer) -> int:
-        """Поиск первого попавшегося наблюдателя в коллекции по типу класса"""
-        observers = list(filter(
-            lambda x:
-            type(x["observer"]) == type(observer) and
-            getattr(x["observer"], 'observer_id', None) == getattr(observer, 'observer_id', None), self.__observers__)
+        """look up firs observer"""
+        observers = list(
+            filter(
+                lambda x: type(x["observer"]) == type(observer)
+                and getattr(x["observer"], "observer_id", None) == getattr(observer, "observer_id", None),
+                self.__observers__,
+            )
         )
         if observers:
             return self.__observers__.index(observers[0])
