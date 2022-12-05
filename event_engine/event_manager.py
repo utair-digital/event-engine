@@ -64,28 +64,25 @@ class EventManager(BaseEventManager):
             self._binds[event] = Observable(is_type_check)
         self._binds[event].add_observer(handler)
 
-    async def raise_event(self, event: Event, silent: bool = True) -> None:
+    async def raise_event(self, event: Event) -> None:
         """
         Raise event
         :param event: Event
-        :param silent: skip errors from unregistered event
         :return:
         """
-        await self._raise_event(event=event, silent=silent)
+        await self._raise_event(event=event)
 
     async def _raise_event(
         self,
-        event: Event,
-        silent: bool = True,
+        event: Event
     ) -> None:
         """
          raise events
         :param event: Event
-        :param silent: skip errors from unregistered event
         """
         event_type = event.__class__
 
-        if event_type not in self._binds.keys() and not silent:
+        if event_type not in self._binds.keys():
             err = EventNotRegisteredError("Raised event is not registered")
             self.logger.exception(err)
             raise err

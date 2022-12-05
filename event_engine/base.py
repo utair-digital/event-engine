@@ -99,7 +99,7 @@ class BaseEventManager:
         raise NotImplementedError
 
     @abstractmethod
-    async def raise_event(self, event: Event, silent: bool = True) -> None:
+    async def raise_event(self, event: Event) -> None:
         """
         :param event:
         :param silent: skip errors
@@ -107,7 +107,7 @@ class BaseEventManager:
         raise NotImplementedError
 
     @abstractmethod
-    async def _raise_event(self, event: Event, silent: bool = True) -> None:
+    async def _raise_event(self, event: Event) -> None:
         """
         :param silent: skip errors
         """
