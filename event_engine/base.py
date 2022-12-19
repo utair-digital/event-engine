@@ -90,23 +90,36 @@ class BaseEventManager:
         is_type_check: bool = False,
     ) -> None:
         """
-        bind event with handler
-        :param events:
-        :param handler:
-        :param is_type_check:
-        :return:None
+        Bind events with handler
+
+        Args:
+            events (list): Events
+            handler (Handler): Handler
+            is_type_check (bool): Check duplicate handlers
+
         """
         raise NotImplementedError
 
     @abstractmethod
     async def raise_event(self, event: Event) -> None:
         """
-        :param event:
+        Raise event
+
+        Args:
+            event (Event): Event object
+
         """
         raise NotImplementedError
 
     @abstractmethod
     async def _raise_event(self, event: Event) -> None:
+        """
+        Raise event
+
+        Args:
+            event (Event): Event object
+
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -117,4 +130,13 @@ class BaseEventManager:
     def _bind(
         self, event: Type[Event], handler: Union[BaseObserver, Callable[[Event], None]], is_type_check: bool = False
     ) -> None:
+        """
+        Bind event with handler
+
+        Args:
+            event (list): Event
+            handler (Handler): Handler
+            is_type_check (bool): Check duplicate handlers
+
+        """
         raise NotImplementedError

@@ -9,6 +9,7 @@ from event_engine.event_manager import EventManager
 from event_engine.exceptions import BaseEventEngineError
 from event_engine.shutdownable import ShutDownable
 from .base import KafkaConfig
+from .exceptions import CantUnpackDataFromBus
 from ..base import BaseDeserializer
 
 
@@ -25,7 +26,13 @@ class KafkaSubClient(ShutDownable):
         logger: logging.Logger = logging.getLogger("kafka.sub.client"),
     ):
         """
-        :param event_manager: Менеджер событий
+
+        Args:
+            event_manager:
+            kafka_config:
+            handle_signals:
+            deserializer:
+            logger:
         """
 
         self.ee = event_manager
@@ -43,7 +50,6 @@ class KafkaSubClient(ShutDownable):
         self.logger.info("Starting kafka listener...")
         self.logger.info("Registering event handlers...")
         self._consumer = AIOKafkaConsumer(
-            *self.kafka_config.subscribe_topics,
             bootstrap_servers=self.kafka_config.servers,
             group_id=self.kafka_config.service_name,
             metadata_max_age_ms=self.kafka_config.metadata_max_age_ms,
@@ -51,6 +57,13 @@ class KafkaSubClient(ShutDownable):
         # Get cluster layout and topic/partition allocation
         self.logger.info("Getting cluster layout and topic/partition allocation..")
         await self._consumer.start()
+
+        if self.kafka_config.subscribe_pattern:
+            self._consumer.subscribe(pattern=self.kafka_config.subscribe_pattern)
+
+        if self.kafka_config.subscribe_topics:
+            self._consumer.subscribe(topics=self.kafka_config.subscribe_topics)
+
         self.logger.info("Waiting for new messages..")
 
         try:
@@ -67,18 +80,13 @@ class KafkaSubClient(ShutDownable):
         try:
             message.value = msgpack.unpackb(message.value)
         except Exception as e:
-            # msgpack.UnpackException - deprecated, use Exception to catch all errors
             self.logger.exception(f"Unable to deserialize event byte data: {e}")
-            return
+            raise CantUnpackDataFromBus()
 
-        try:
-            event_data = message.value
-            if self.deserializer is not None:
-                event_data = self.deserializer.deserialize(event_data)
-            event: Event = self.ee.lookup_event(event_data)
-        except BaseEventEngineError as e:
-            self.logger.exception(f"Unable to deserialize event {e}")
-            return
+        event_data = message.value
+        if self.deserializer is not None:
+            event_data = self.deserializer.deserialize(event_data)
+        event: Event = self.ee.lookup_event(event_data)
 
         try:
             assert event.topic == message.topic, "Unable to ensure topic is same as deserialized event topic"
