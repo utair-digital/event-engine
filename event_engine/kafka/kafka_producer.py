@@ -5,15 +5,6 @@ from .base import KafkaConfig
 _PRODUCER: Optional[AIOKafkaProducer] = None
 
 
-async def start_kafka_producer(config: KafkaConfig):
-    """
-    Получение продюссера
-    Нужно вызвать при старте приложения
-    """
-    prod = await get_producer(config)
-    await prod.start()
-
-
 async def get_producer(config: KafkaConfig) -> AIOKafkaProducer:
     global _PRODUCER
     if _PRODUCER:
@@ -24,7 +15,7 @@ async def get_producer(config: KafkaConfig) -> AIOKafkaProducer:
 
 async def stop_kafka_producer():
     """
-    Остановка продюссера
+    stop producer
     call on shutdown
     """
     global _PRODUCER

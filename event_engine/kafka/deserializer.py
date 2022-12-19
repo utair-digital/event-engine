@@ -4,6 +4,14 @@ from event_engine.base import BaseDeserializer
 class LegacyDeserializer(BaseDeserializer):
     @classmethod
     def deserialize(cls, event_data: dict) -> dict:
+        """
+        Deserialize event data
+        Args:
+            event_data (dict): event data
+
+        Returns:
+            dict
+        """
         _event_data = event_data
         if event_data.get("meta", {}).get("version") != "2.0":
             _event_data = {
