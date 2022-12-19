@@ -28,3 +28,7 @@ class EventBuildingError(BaseEventEngineError):
 
 class BusNotDefinedError(BaseEventEngineError):
     pass
+
+
+class EventWasNotSentToBus(BaseEventEngineError):
+    pass

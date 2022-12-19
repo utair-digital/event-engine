@@ -8,6 +8,7 @@ from .exceptions import (
     InvalidEventType,
     InvalidObserverType,
     BusNotDefinedError,
+    EventWasNotSentToBus,
 )
 from .observable import Observable
 from .observer import Observer
@@ -26,10 +27,12 @@ class EventManager(BaseEventManager):
     ) -> None:
         """
         Bind events with handler
-        :param events: Event
-        :param handler: Handler
-        :param is_type_check: Check duplicate handlers
-        :return: None
+
+        Args:
+            events (list): Events
+            handler (Handler): Handler
+            is_type_check (bool): Check duplicate handlers
+
         """
         observer_id = handler.observer_id
 
@@ -55,10 +58,12 @@ class EventManager(BaseEventManager):
     ) -> None:
         """
         Bind event with handler
-        :param event: Event
-        :param handler: Handler
-        :param is_type_check: Check duplicate handlers
-        :return: None
+
+        Args:
+            event (list): Event
+            handler (Handler): Handler
+            is_type_check (bool): Check duplicate handlers
+
         """
         if event not in self._binds.keys():
             self._binds[event] = Observable(is_type_check)
@@ -67,9 +72,15 @@ class EventManager(BaseEventManager):
     async def raise_event(self, event: Event, silent: bool = True) -> None:
         """
         Raise event
-        :param event: Event
-        :param silent: skip errors from unregistered event
-        :return:
+
+        Args:
+            event (Event): Event object
+            silent: skip errors from unregistered event
+
+        Raises:
+            EventWasNotSentToBus: If there are problems with the bus
+            BusNotDefinedError: If you try to send an event to a bus that is not defined
+
         """
         await self._raise_event(event=event, silent=silent)
 
@@ -79,9 +90,16 @@ class EventManager(BaseEventManager):
         silent: bool = True,
     ) -> None:
         """
-         raise events
-        :param event: Event
-        :param silent: skip errors from unregistered event
+        Raise events
+
+        Args:
+            event: Event
+            silent: skip errors from unregistered event
+
+        Raises:
+            EventWasNotSentToBus: If there are problems with the bus
+            BusNotDefinedError: If you try to send an event to a bus that is not defined
+
         """
         event_type = event.__class__
 
@@ -104,6 +122,7 @@ class EventManager(BaseEventManager):
                     await self.bus.send(event)
                 except Exception as e:
                     self.logger.exception(e)
+                    raise EventWasNotSentToBus()
             if not event.is_internal:
                 # without raising event in app
                 return
@@ -114,7 +133,17 @@ class EventManager(BaseEventManager):
         raise NotImplementedError
 
     def lookup_event(self, event: Dict) -> Event:
-        """look up the registered event and return it"""
+        """
+        look up the registered event and return it
+        Args:
+            event (dict): event data
+
+        Returns:
+            event (Event): event object
+
+        Raises
+            EventNotRegisteredError: If event is not registered in event engine
+        """
         for event_instance in list(self._binds.keys()):
             if str(event_instance.get_default_name()) == event["name"]:
                 return event_instance(**event)

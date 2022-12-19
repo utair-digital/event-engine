@@ -89,6 +89,25 @@ await client.listen()
 
 ```
 
+#### 📖 **Consume events from kafka by pattern**
+
+```python
+kafka_config = KafkaConfig(
+        servers=["localhost:9092"],
+        subscribe_pattern="demo.*",
+        service_name="example_service",
+    )
+
+# register events
+em: EventManager = EventManager()
+em.register([PaymentEvent1, PaymentEvent2], PaymentObserver(), is_type_check=True)
+
+client = KafkaSubClient(event_manager=em, kafka_config=kafka_config, handle_signals=False)
+
+# listen events
+await client.listen()
+```
+
 #### 📖 **Custom bus**
 if you want to use custom bus, you should implement bus protocol
 
