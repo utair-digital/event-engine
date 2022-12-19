@@ -33,3 +33,4 @@ class KafkaBus:
         except KafkaError as e:
             event.is_published = False
             self.logger.exception(e)
+            raise
