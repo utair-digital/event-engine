@@ -27,8 +27,9 @@ class Observable(BaseObservable):
     ) -> None:
         """
         Add observer
-        :param observer: Observer
-        :return:
+        Args:
+            observer (Observer): observer
+
         """
         if not isinstance(observer, Observer):
             raise InvalidObserverType("Invalid observer type")
@@ -39,7 +40,12 @@ class Observable(BaseObservable):
         self.__observers__.append(dict(observer=observer))
 
     def remove_observer(self, observer: Observer) -> None:
-        """remove observer"""
+        """
+        Remove observer
+        Args:
+            observer (Observer):
+
+        """
         if not isinstance(observer, Observer):
             raise InvalidObserverType("Invalid observer type")
         observer_index = self.__get_first_observer_instance_index__(observer)
@@ -47,18 +53,35 @@ class Observable(BaseObservable):
             self.__observers__.pop(observer_index)
 
     async def notify_observers(self, event: Event) -> None:
-        """send event to observers"""
+        """
+        Send event to observers
+        Args:
+            event (Event): event object
+
+        """
         if not isinstance(event, Event):
             raise InvalidEventType("Invalid event type")
         await self.__notify__(event)
 
     async def __notify__(self, event: Event) -> None:
-        """send event to observers"""
+        """
+        Send event to observers
+        Args:
+            event (Event): event object
+
+        """
         for observer in self.__observers__:
             await observer["observer"].handle_event(event)
 
     def __get_first_observer_instance_index__(self, observer: Observer) -> int:
-        """look up firs observer"""
+        """
+        Look up firs observer
+        Args:
+            observer (Observer):
+
+        Returns:
+            int
+        """
         observers = list(filter(lambda x: x["observer"] == observer, self.__observers__))
         if observers:
             return self.__observers__.index(observers[0])
@@ -66,7 +89,14 @@ class Observable(BaseObservable):
             return -1
 
     def __get_first_observer_type_index__(self, observer: Observer) -> int:
-        """look up firs observer"""
+        """
+        Look up firs observer
+        Args:
+            observer (Observer):
+
+        Returns:
+            int
+        """
         observers = list(
             filter(
                 lambda x: type(x["observer"]) == type(observer)

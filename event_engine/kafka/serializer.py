@@ -5,6 +5,15 @@ from event_engine.base import BaseSerializer
 class LegacySerializer(BaseSerializer):
     @classmethod
     def serialize(cls, event: Event) -> dict:
+        """
+        Serialize event object to dict
+        Args:
+            event (Event): event object
+
+        Returns:
+            dict
+
+        """
         if event.meta.version == "2.0":
             return event.dict(by_alias=True)
 

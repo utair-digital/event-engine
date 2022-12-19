@@ -11,4 +11,10 @@ class Observer(BaseObserver):
         self.observer_id = self.observer_id if self.observer_id else self.__class__.__name__
 
     async def handle_event(self, event: Event) -> None:
+        """
+        Handle event
+        Args:
+            event (Event): event object
+
+        """
         raise NotImplementedError

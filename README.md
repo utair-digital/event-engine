@@ -2,6 +2,17 @@
   <b>Event Engine</b> - event driven framework with kafka bus
 </p>
 
+## 🍿Contents
+
+- [Quickstart](#-quickstart)
+- [Installation](#-installation)
+- [Examples](#-examples)
+    - [Basic produce event to kafka](#-basic-produce-event-to-kafka)
+    - [Basic consume events from kafka](#-basic-consume-events-from-kafka)
+    - [Consume events from kafka by pattern](#-consume-events-from-kafka-by-pattern)
+    - [Custom bus](#-custom-bus)
+    - [The Easiest way to get configure event manager](#-the-easiest-way-to-get-configure-event-manager)
+
 ## ⚡️ Quickstart
 
 ```python

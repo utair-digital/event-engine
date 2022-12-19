@@ -29,6 +29,15 @@ class Event(GenericModel, Generic[T]):
     is_publishable: Optional[bool] = False
 
     def __init__(self, **kwargs):
+        """
+
+        Args:
+            **kwargs:
+
+        Raises:
+             EventBuildingError:
+
+        """
         topic = kwargs.get("topic", None) or self.__fields__["topic"].default
         is_internal = kwargs.get("is_internal", None) or self.__fields__["is_internal"].default
         is_publishable = kwargs.get("is_publishable", None) or self.__fields__["is_publishable"].default
@@ -53,5 +62,5 @@ class Event(GenericModel, Generic[T]):
         return None
 
     @classmethod
-    def get_default_name(cls):
+    def get_default_name(cls) -> str:
         return cls.__fields__["name"].default
