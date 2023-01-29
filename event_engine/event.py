@@ -21,7 +21,7 @@ class Event(GenericModel, Generic[T]):
     name: str = ""
     topic: Optional[str] = None
     data: T
-    meta: EventMeta = Field(default=EventMeta())
+    meta: EventMeta = Field(default_factory=EventMeta)
 
     event_key: Optional[str] = None
     is_published: Optional[bool] = False

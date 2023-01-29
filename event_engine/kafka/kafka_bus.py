@@ -29,7 +29,11 @@ class KafkaBus:
                 event_data = self.serializer.serialize(event)
             else:
                 event_data = event.dict(by_alias=True)
-            await producer.send_and_wait(topic=event.topic, key=event.event_key, value=msgpack.packb(event_data))
+            await producer.send_and_wait(
+                topic=event.topic,
+                key=event.event_key,
+                value=msgpack.packb(event_data, encoding="utf-8")
+            )
         except KafkaError as e:
             event.is_published = False
             self.logger.exception(e)
