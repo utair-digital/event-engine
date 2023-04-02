@@ -37,6 +37,7 @@ class KafkaBus:
             await producer.send_and_wait(
                 topic=event.topic,
                 key=event.event_key,
+                # fixme: unserializable python objects datetime/uuid etc
                 value=msgpack.packb(event_data)
             )
             # set event published
