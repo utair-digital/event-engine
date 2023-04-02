@@ -55,9 +55,9 @@ class Event(GenericModel, Generic[T]):
 
         super().__init__(**kwargs)
 
-    def get_event_key(self) -> Optional[bytes]:
+    def get_event_key(self) -> Optional[bytes]: # noqa
         """
-        event uniquid key
+        event unique id key
         """
         return None
 

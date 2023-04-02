@@ -4,8 +4,18 @@ from pathlib import Path
 from dataclasses import dataclass
 from aiokafka.helpers import create_ssl_context
 from ssl import SSLContext
+from enum import Enum
 
 from .exceptions import ProvideTopicsAndPattern, NotProvidedTopicsOrPattern
+
+class AuthSecProtocol(str, Enum):
+    PLAIN_TEXT = "PLAINTEXT"
+    SASL_SSL = "SASL_SSL"
+    SASL_PLAIN_TEXT = "SASL_PLAINTEXT"
+
+class SaslMechanism(str, Enum):
+    PLAIN = "PLAIN"
+    SCRAM_SHA_512 = "SCRAM-SHA-512"
 
 
 @dataclass
@@ -109,22 +119,22 @@ class KafkaConfig:
         return bool(self.auth)
 
     @property
-    def security_protocol(self) -> str:
+    def security_protocol(self) -> AuthSecProtocol:
         if not self.auth:
-            return "PLAINTEXT"
+            return AuthSecProtocol.PLAIN_TEXT
         if self.auth and self.auth.tlsCAFile:
-            return "SASL_SSL"
+            return AuthSecProtocol.SASL_SSL
         if self.auth and not self.auth.tlsCAFile:
-            return "SASL_PLAINTEXT"
+            return AuthSecProtocol.SASL_PLAIN_TEXT
         raise ValueError("Unable to choose security protocol")
 
     @property
-    def sasl_mechanism(self) -> str:
-        return "PLAIN" if not self.should_auth else "SCRAM-SHA-512"
+    def sasl_mechanism(self) -> SaslMechanism:
+        return SaslMechanism.PLAIN if not self.should_auth else SaslMechanism.SCRAM_SHA_512
 
     @property
     def ssl_context(self) -> Optional[SSLContext]:
-        if self.security_protocol != "SASL_SSL":
+        if self.security_protocol != AuthSecProtocol.SASL_SSL:
             return None
         return self.auth.ssl_context
 
