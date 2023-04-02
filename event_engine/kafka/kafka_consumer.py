@@ -84,7 +84,7 @@ class KafkaSubClient(ShutDownable):
 
     async def on_message(self, message: ConsumerRecord):
         try:
-            message.value = msgpack.unpackb(message.value, encoding="utf-8")
+            message.value = msgpack.unpackb(message.value)
         except Exception as e:
             self.logger.exception(f"Unable to deserialize event byte data: {e}")
             raise CantUnpackDataFromBus()

@@ -24,14 +24,11 @@ class KafkaBus:
         try:
             await self._send(event)
         except KafkaError as e:
-            event.is_published = False
             self.logger.exception(e)
             raise
 
     async def _send(self, event: Event, _try: int = 0):
         producer = await get_kafka_producer(config=self.kafka_config)
-        # set event published
-        event.is_published = True
         if self.serializer is not None:
             event_data = self.serializer.serialize(event)
         else:
@@ -40,10 +37,11 @@ class KafkaBus:
             await producer.send_and_wait(
                 topic=event.topic,
                 key=event.event_key,
-                value=msgpack.packb(event_data, encoding="utf-8")
+                value=msgpack.packb(event_data)
             )
+            # set event published
+            event.is_published = True
         except ProducerClosed as e:
-            event.is_published = False
             await _recreate_producer(config=self.kafka_config)
             _try += 1
             self.logger.exception(e)
