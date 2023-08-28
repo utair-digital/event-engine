@@ -15,6 +15,7 @@ class LegacySerializer(BaseSerializer):
 
         """
         if event.meta.version == "2.0":
+            # fixme: unserializable python objects datetime/uuid etc
             return event.dict(by_alias=True)
 
         return dict(
@@ -26,6 +27,7 @@ class LegacySerializer(BaseSerializer):
                 is_published=event.is_published,
                 is_publishable=event.is_publishable,
                 name=event.name,
+                # fixme: unserializable python objects datetime/uuid etc
                 data=event.data.dict(by_alias=True),
             ),
         )

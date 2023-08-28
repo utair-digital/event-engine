@@ -1,13 +1,23 @@
 from ..exceptions import BaseEventEngineError
 
 
-class ProvideTopicsAndPattern(BaseEventEngineError):
+class BaseKafkaBusError(BaseEventEngineError):
     pass
 
 
-class NotProvidedTopicsOrPattern(BaseEventEngineError):
+class ProvideTopicsAndPattern(BaseKafkaBusError):
     pass
 
 
-class CantUnpackDataFromBus(BaseEventEngineError):
+class NotProvidedTopicsOrPattern(BaseKafkaBusError):
+    pass
+
+
+class CantUnpackDataFromBus(BaseKafkaBusError):
+    pass
+
+class CantRecreateNonExistingProducer(BaseKafkaBusError):
+    pass
+
+class CantCloseNonExistingProducer(BaseKafkaBusError):
     pass
