@@ -1,7 +1,6 @@
 from typing import Generic, TypeVar, Optional, Any, Dict
 
 from pydantic import BaseModel, Field
-from pydantic.generics import GenericModel
 
 from .exceptions import EventBuildingError
 
@@ -10,24 +9,24 @@ T = TypeVar("T", bound=BaseModel)
 
 class EventMeta(BaseModel):
     version: str = "2.0"
-    trace: Optional[str] = None
+    trace: str | None = None
 
 
-class Event(GenericModel, Generic[T]):
+class Event(BaseModel, Generic[T]):
     """
     common event
     """
 
     name: str = ""
     # fixme: Overriding this field in inherited objects can change the type
-    topic: Optional[str] = None
+    topic: str | None = None
     data: T
     meta: EventMeta = Field(default_factory=EventMeta)
 
-    event_key: Optional[str] = None
-    is_published: Optional[bool] = False
-    is_internal: Optional[bool] = False
-    is_publishable: Optional[bool] = False
+    event_key: str | None = None
+    is_published: bool = False
+    is_internal: bool = False
+    is_publishable: bool = False
 
     def __init__(self, **kwargs):
         """
@@ -45,7 +44,7 @@ class Event(GenericModel, Generic[T]):
         self._update_kwargs("is_published", kwargs)
         super().__init__(**kwargs)
 
-        if not self.__fields__["name"].default and not kwargs.get("name"):
+        if not self.model_fields["name"].default and not kwargs.get("name"):
             kwargs.update({"name": self.__class__.__name__})
 
         if not self.topic and self.is_published:
@@ -55,7 +54,7 @@ class Event(GenericModel, Generic[T]):
             raise EventBuildingError("Event must be at least one of is_internal/is_publishable")
 
     def _update_kwargs(self, key: Any, kwargs: Dict):
-        value = kwargs.get(key, None) or self.__fields__[key].default
+        value = kwargs.get(key, None) or self.model_fields[key].default
         if value is None:
             return
         kwargs[key] = value
@@ -68,4 +67,5 @@ class Event(GenericModel, Generic[T]):
 
     @classmethod
     def get_default_name(cls) -> str:
-        return cls.__fields__["name"].default
+        return cls.model_fields["name"].default
+
