@@ -49,10 +49,16 @@ class KafkaSubClient(ShutDownable):
     async def listen(self):
         self.logger.info("Starting kafka listener...")
         self.logger.info("Registering event handlers...")
+
         self._consumer = AIOKafkaConsumer(
             bootstrap_servers=self.kafka_config.servers,
             group_id=self.kafka_config.service_name,
             metadata_max_age_ms=self.kafka_config.metadata_max_age_ms,
+            ssl_context=self.kafka_config.ssl_context,
+            security_protocol=self.kafka_config.security_protocol.value,
+            sasl_plain_password=self.kafka_config.auth.password if self.kafka_config.should_auth else None,
+            sasl_plain_username=self.kafka_config.auth.username if self.kafka_config.should_auth else None,
+            sasl_mechanism=self.kafka_config.sasl_mechanism.value
         )
         # Get cluster layout and topic/partition allocation
         self.logger.info("Getting cluster layout and topic/partition allocation..")

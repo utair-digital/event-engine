@@ -9,19 +9,19 @@ class PaymentEventData(BaseModel):
 
 
 class PaymentEvent(Event[PaymentEventData]):
-    topic = "demo_topic"
+    topic: str = "demo_topic"
 
 
 class PaymentEvent1(PaymentEvent):
-    name = "PaymentEvent1"
-    is_internal = True
-    is_publishable = False
+    name: str = "PaymentEvent1"
+    is_internal: bool = True
+    is_publishable: bool = False
 
 
 class PaymentEvent2(PaymentEvent):
-    name = "PaymentEvent2"
-    is_internal = True
-    is_publishable = True
+    name: str = "PaymentEvent2"
+    is_internal: bool = True
+    is_publishable: bool = True
 
 
 class PaymentObserver(Observer):
