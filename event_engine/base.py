@@ -67,7 +67,7 @@ class BaseEventManager:
 
     def __init__(
         self,
-        logger: logging.Logger = logging.getLogger("event_manager"),
+        logger: logging.Logger = logging.getLogger("event_engine.manager"),
         tracer: Optional[Tracer] = None,
         bus: Optional[Bus] = None,
     ):

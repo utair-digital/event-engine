@@ -29,7 +29,7 @@ classifiers = [
 
 [tool.poetry]
 name = "event-engine"
-version = "0.1.0"
+version = "0.1.1-alpha"
 description = ""
 authors = []
 
