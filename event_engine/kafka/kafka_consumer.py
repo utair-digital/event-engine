@@ -23,7 +23,7 @@ class KafkaSubClient(ShutDownable):
         kafka_config: KafkaConfig,
         handle_signals: bool = False,
         deserializer: Optional[BaseDeserializer] = None,
-        logger: logging.Logger = logging.getLogger("kafka.sub.client"),
+        logger: logging.Logger = logging.getLogger("event_engine.bus.kafka.subscriber"),
     ):
         """
 

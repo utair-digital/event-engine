@@ -14,7 +14,7 @@ class KafkaBus:
     def __init__(self, kafka_config: KafkaConfig, serializer: Optional[BaseSerializer] = None):
         self.kafka_config = kafka_config
         self.serializer = serializer
-        self.logger = logging.getLogger("kafka.bus")
+        self.logger = logging.getLogger("event_engine.bus.kafka.producer")
 
     async def start(self):
         producer = await get_kafka_producer(config=self.kafka_config)
