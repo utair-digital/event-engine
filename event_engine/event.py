@@ -23,7 +23,7 @@ class Event(BaseModel, Generic[T]):
     data: T
     meta: EventMeta = Field(default_factory=EventMeta)
 
-    event_key: str | None = None
+    event_key: str | bytes | None = None
     is_published: bool = False
     is_internal: bool = False
     is_publishable: bool = False
@@ -62,10 +62,14 @@ class Event(BaseModel, Generic[T]):
     def get_event_key(self) -> Optional[bytes]: # noqa
         """
         event unique id key
+        partition key for kafka bus
         """
-        return None
+        if not self.event_key:
+            return None
+        if isinstance(self.event_key, str):
+            return self.event_key.encode("utf-8")
+        return self.event_key
 
     @classmethod
     def get_default_name(cls) -> str:
         return cls.model_fields["name"].default
-
