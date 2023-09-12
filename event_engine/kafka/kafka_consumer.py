@@ -101,6 +101,7 @@ class KafkaSubClient(ShutDownable):
             return
 
         try:
+            event.is_published = True
             return await self.ee.raise_event(event)
         except (ValueError, TypeError, BaseEventEngineError) as e:
             self.logger.exception(f"Unable to raise event: {e}")
