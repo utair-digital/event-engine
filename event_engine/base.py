@@ -7,16 +7,6 @@ from .event import Event
 
 
 @runtime_checkable
-class Tracer(Protocol):
-    async def get_trace_string(self) -> str:
-        ...
-
-    @classmethod
-    async def from_trace_string(cls, trace: str) -> "Tracer":
-        ...
-
-
-@runtime_checkable
 class Bus(Protocol):
     async def send(self, event: Event):
         ...
@@ -41,7 +31,6 @@ class BaseObserver(metaclass=ABCMeta):
 
 
 class BaseObservable(metaclass=ABCMeta):
-
     __observers__: Collection
 
     @abstractmethod
@@ -62,21 +51,15 @@ class BaseObservable(metaclass=ABCMeta):
 
 
 class BaseEventManager:
-
     _binds: Dict[Type[Event], BaseObservable]
 
     def __init__(
         self,
         logger: logging.Logger = logging.getLogger("event_manager"),
-        tracer: Optional[Tracer] = None,
         bus: Optional[Bus] = None,
     ):
         self._binds: Dict[Type[Event], BaseObservable] = dict()
         self.logger = logger
-
-        if tracer is not None and not isinstance(tracer, Tracer):
-            raise Exception("not valid interface of tracer")
-        self.tracer = tracer
 
         if bus is not None and not isinstance(bus, Bus):
             raise Exception("not valid interface of bus")

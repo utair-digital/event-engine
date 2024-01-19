@@ -1,5 +1,7 @@
 from typing import List, Type, Dict, Callable, Union
 
+from opentelemetry import trace
+
 from .base import BaseEventManager
 from .event import Event
 from .exceptions import (
@@ -20,10 +22,10 @@ class EventManager(BaseEventManager):
     """
 
     def register(
-        self,
-        events: List[Type[Event]],
-        handler: Observer,
-        is_type_check: bool = False,
+            self,
+            events: List[Type[Event]],
+            handler: Observer,
+            is_type_check: bool = False,
     ) -> None:
         """
         Bind events with handler
@@ -51,10 +53,10 @@ class EventManager(BaseEventManager):
             self._bind(event, handler, is_type_check)
 
     def _bind(
-        self,
-        event: Type[Event],
-        handler: Union[Observer, Callable[[Event], None]],
-        is_type_check: bool = False,
+            self,
+            event: Type[Event],
+            handler: Union[Observer, Callable[[Event], None]],
+            is_type_check: bool = False,
     ) -> None:
         """
         Bind event with handler
@@ -81,11 +83,12 @@ class EventManager(BaseEventManager):
             BusNotDefinedError: If you try to send an event to a bus that is not defined
 
         """
-        await self._raise_event(event=event)
+        with trace.get_tracer("event-engine").start_as_current_span(f"EE {event.name}"):
+            await self._raise_event(event=event)
 
     async def _raise_event(
-        self,
-        event: Event
+            self,
+            event: Event
     ) -> None:
         """
         Raise events

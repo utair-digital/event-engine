@@ -10,10 +10,10 @@ class PaymentEventData(BaseModel):
 
 
 class PaymentEvent(Event[PaymentEventData]):
-    topic = "payments"
-    is_internal = True
+    topic: str = "payments"
+    is_internal: bool = True
 
-    name = "payment_event"
+    name: str = "payment_event"
 
 
 class PaymentHandler(Observer):
@@ -26,10 +26,10 @@ class DemoEventData(BaseModel):
 
 
 class DemoEvent(Event[PaymentEventData]):
-    topic = "demo"
-    is_internal = True
+    topic: str = "demo"
+    is_internal: bool = True
 
-    name = "demo_event"
+    name: str = "demo_event"
 
 
 class DemoHandler(Observer):
