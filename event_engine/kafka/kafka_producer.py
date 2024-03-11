@@ -24,6 +24,7 @@ async def get_kafka_producer(config: KafkaConfig) -> AIOKafkaProducer:
     )
     return await get_kafka_producer(config)
 
+
 async def stop_kafka_producer():
     """
     stop producer
@@ -34,6 +35,7 @@ async def stop_kafka_producer():
         raise CantCloseNonExistingProducer()
     await _PRODUCER.stop()
 
+
 async def _recreate_producer(config: KafkaConfig):
     """
     Recreate producer in case of aiokafka.errors.ProducerClosed during send
@@ -41,7 +43,7 @@ async def _recreate_producer(config: KafkaConfig):
     global _PRODUCER
     if not _PRODUCER:
         raise CantRecreateNonExistingProducer()
-    await stop_kafka_producer() # will stop if not _closed
+    await stop_kafka_producer()  # will stop if not _closed
     _PRODUCER = None
     _PRODUCER = await get_kafka_producer(config)
     await _PRODUCER.start()

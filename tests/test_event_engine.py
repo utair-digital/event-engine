@@ -1,12 +1,17 @@
 import pytest
 
-from event_engine import EventManager, Observer, Event
-from tests.fixtures.event import PaymentEvent, payment_event, PaymentHandler, demo_event, DemoEvent, DemoHandler
+from event_engine import EventManager
+from tests.fixtures.event import (
+    PaymentEvent,
+    payment_event,
+    PaymentHandler,
+    DemoEvent,
+    DemoHandler,
+)
 from unittest.mock import AsyncMock
 
 
 def test_ee_register_and_lookup_event(payment_event):
-
     ee = EventManager()
 
     ee.register([PaymentEvent], PaymentHandler())

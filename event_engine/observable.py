@@ -11,7 +11,6 @@ from .observer import Observer
 
 
 class Observable(BaseObservable):
-
     __observers__: List[Dict]
 
     def __init__(self, is_type_check: bool = False):
@@ -35,8 +34,13 @@ class Observable(BaseObservable):
             raise InvalidObserverType("Invalid observer type")
         if self.__get_first_observer_instance_index__(observer) != -1:
             raise ObserverAlreadyRegistered("Observer already added")
-        if self.is_type_check and self.__get_first_observer_type_index__(observer) != -1:
-            raise ObserverAlreadyRegistered("Observer with type {} already added".format(str(type(observer))))
+        if (
+            self.is_type_check
+            and self.__get_first_observer_type_index__(observer) != -1
+        ):
+            raise ObserverAlreadyRegistered(
+                "Observer with type {} already added".format(str(type(observer)))
+            )
         self.__observers__.append(dict(observer=observer))
 
     def remove_observer(self, observer: Observer) -> None:
@@ -82,7 +86,9 @@ class Observable(BaseObservable):
         Returns:
             int
         """
-        observers = list(filter(lambda x: x["observer"] == observer, self.__observers__))
+        observers = list(
+            filter(lambda x: x["observer"] == observer, self.__observers__)
+        )
         if observers:
             return self.__observers__.index(observers[0])
         else:
@@ -100,7 +106,8 @@ class Observable(BaseObservable):
         observers = list(
             filter(
                 lambda x: type(x["observer"]) == type(observer)
-                and getattr(x["observer"], "observer_id", None) == getattr(observer, "observer_id", None),
+                and getattr(x["observer"], "observer_id", None)
+                == getattr(observer, "observer_id", None),
                 self.__observers__,
             )
         )

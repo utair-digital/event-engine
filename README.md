@@ -22,7 +22,7 @@ class PaymentEventData(BaseModel):
 
 
 class PaymentEvent(Event[PaymentEventData]):
-    topic = "demo_topic"
+    topic: str = "demo_topic"
 
 class PaymentObserver(Observer):
     async def handle_event(self, event: PaymentEvent):

@@ -8,10 +8,12 @@ from enum import Enum
 
 from .exceptions import ProvideTopicsAndPattern, NotProvidedTopicsOrPattern
 
+
 class AuthSecProtocol(str, Enum):
     PLAIN_TEXT = "PLAINTEXT"
     SASL_SSL = "SASL_SSL"
     SASL_PLAIN_TEXT = "SASL_PLAINTEXT"
+
 
 class SaslMechanism(str, Enum):
     PLAIN = "PLAIN"
@@ -35,8 +37,8 @@ class KafkaAuth:
 
     def validate(self):
         if not all((
-            self.username,
-            self.password
+                self.username,
+                self.password
         )):
             raise ValueError("Unable to authenticate, username or password was not provided")
 
@@ -61,13 +63,13 @@ class KafkaConfig:
     auth: Optional[KafkaAuth] = None
 
     def __init__(
-        self,
-        servers: List[str],
-        service_name: str,
-        metadata_max_age_ms: int = 10 * 1000,
-        subscribe_topics: Optional[List[str]] = None,
-        subscribe_pattern: Optional[str] = None,
-        auth: Optional[Union[KafkaAuth, Dict]] = None
+            self,
+            servers: List[str],
+            service_name: str,
+            metadata_max_age_ms: int = 10 * 1000,
+            subscribe_topics: Optional[List[str]] = None,
+            subscribe_pattern: Optional[str] = None,
+            auth: Optional[Union[KafkaAuth, Dict]] = None
     ):
         """
         kafka configs
