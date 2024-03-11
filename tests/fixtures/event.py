@@ -67,3 +67,17 @@ def demo_event() -> DemoEvent:
             "is_publishable": False,
         }
     )
+
+
+@pytest.fixture
+def payment_event_raw_data() -> dict:
+    return {
+        "name": "payment_event",
+        "topic": "payments",
+        "data": {"status": "ok", "payment_id": "we5r24t-okj"},
+        "meta": {"version": "2.0", "trace": None},
+        "event_key": "1",
+        "is_published": False,
+        "is_internal": True,
+        "is_publishable": False,
+    }

@@ -4,6 +4,7 @@ from typing import Optional
 import msgpack
 from aiokafka import AIOKafkaConsumer, ConsumerRecord, ConsumerStoppedError
 from opentelemetry import trace, propagate
+from opentelemetry.context.context import Context
 
 from event_engine.event import Event
 from event_engine.event_manager import EventManager
@@ -97,23 +98,21 @@ class KafkaSubClient(ShutDownable):
             event_data = self.deserializer.deserialize(event_data)
         event: Event = self.ee.lookup_event(event_data)
 
-        try:
-            assert event.topic == message.topic, "Unable to ensure topic is same as deserialized event topic"
-        except AssertionError:
-            self.logger.exception(f"Incorrect topic assigned: expected [{event.topic}]  actual [{message.topic}]")
-            return
-
+        extracted_context: Context | None = None
         try:
             extracted_context = propagate.extract(event, getter=ContextGetter())
-            with trace.get_tracer("kafka-bus").start_as_current_span(
-                f"EE {event.name}",
-                context=extracted_context,
-                kind=trace.SpanKind.CONSUMER,
-            ):
+        except TypeError as e:
+            self.logger.exception(f"cant extract trace id: {e}")
+
+        with trace.get_tracer("kafka-bus").start_as_current_span(
+            f"EE {event.name}",
+            context=extracted_context,
+            kind=trace.SpanKind.CONSUMER,
+        ):
+            try:
                 return await self.ee.raise_event(event)
-        except (ValueError, TypeError, BaseEventEngineError) as e:
-            self.logger.exception(f"Unable to raise event: {e}")
-            return
+            except (ValueError, TypeError, BaseEventEngineError) as e:
+                self.logger.exception(f"Unable to raise event: {e}")
 
     async def stop(self):
         self.logger.info("Kafka consumer graceful shutdown...")
