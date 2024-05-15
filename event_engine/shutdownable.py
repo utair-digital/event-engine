@@ -19,10 +19,6 @@ class ShutDownable(ABC):
     async def shutdown(self, signal):
         self.logger.info(f"Received exit signal {signal.name}...")
         await self._on_shutdown()
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        [task.cancel() for task in tasks]
-        self.logger.info(f"Cancelling {len(tasks)} outstanding tasks")
-        await asyncio.gather(*tasks)
 
     @abstractmethod
     async def _on_shutdown(self):

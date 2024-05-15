@@ -26,4 +26,4 @@ class PaymentEvent2(PaymentEvent):
 
 class PaymentObserver(Observer):
     async def handle_event(self, event: PaymentEvent):
-        print(f"HANDLED {event.dict()}")
+        print(f"HANDLED {event.model_dump()}")

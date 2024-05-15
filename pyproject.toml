@@ -2,7 +2,7 @@
 name = "event-engine"
 description = "event driven framework"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 license = "Apache-2.0 license"
 authors = [
 ]
@@ -21,8 +21,6 @@ classifiers = [
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
 
@@ -34,10 +32,11 @@ description = ""
 authors = []
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 msgpack = { version = "*", optional = true }
 aiokafka = { version = "^0.8.0", optional = true }
-pydantic = "2.0.*"
+pydantic = "^2.0.0"
+opentelemetry-sdk = "^1.22.0"
 
 [tool.poetry.extras]
 kafka = ["aiokafka", "msgpack"]
@@ -50,3 +49,7 @@ pytest-cov = "^4.0.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
