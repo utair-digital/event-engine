@@ -27,16 +27,15 @@ classifiers = [
 
 [tool.poetry]
 name = "event-engine"
-version = "0.1.1-alpha"
+version = "0.2.0"
 description = ""
 authors = []
 
 [tool.poetry.dependencies]
-python = "^3.11"
 msgpack = { version = "*", optional = true }
 aiokafka = { version = "^0.8.0", optional = true }
 pydantic = "^2.0.0"
-opentelemetry-sdk = "^1.22.0"
+opentelemetry-sdk = "*"
 
 [tool.poetry.extras]
 kafka = ["aiokafka", "msgpack"]
