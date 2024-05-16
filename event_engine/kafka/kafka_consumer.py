@@ -102,7 +102,7 @@ class KafkaSubClient(ShutDownable):
         try:
             extracted_context = propagate.extract(event, getter=ContextGetter())
         except TypeError as e:
-            self.logger.exception(f"cant extract trace id: {e}")
+            self.logger.info(f"cant extract trace id: {e}")
 
         with trace.get_tracer("kafka-bus").start_as_current_span(
             f"EE {event.name}",
