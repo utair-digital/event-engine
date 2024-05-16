@@ -16,8 +16,14 @@ class NotProvidedTopicsOrPattern(BaseKafkaBusError):
 class CantUnpackDataFromBus(BaseKafkaBusError):
     pass
 
+
 class CantRecreateNonExistingProducer(BaseKafkaBusError):
     pass
 
+
 class CantCloseNonExistingProducer(BaseKafkaBusError):
+    pass
+
+
+class UnableToSendEventToKafka(BaseKafkaBusError):
     pass

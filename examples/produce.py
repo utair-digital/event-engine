@@ -20,7 +20,12 @@ async def raise_events():
                 },
             },
             "loggers": {
-                "event_engine": {
+                "kafka": {
+                    "level": "DEBUG",
+                    "propagate": True,
+                    "handlers": ["console"],
+                },
+                "KafkaSubClient": {
                     "level": "DEBUG",
                     "propagate": True,
                     "handlers": ["console"],

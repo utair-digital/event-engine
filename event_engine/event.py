@@ -51,15 +51,17 @@ class Event(BaseModel, Generic[T]):
             raise EventBuildingError("Publishable event must contain topic")
 
         if not any([self.is_publishable, self.is_internal]):
-            raise EventBuildingError("Event must be at least one of is_internal/is_publishable")
+            raise EventBuildingError(
+                "Event must be at least one of is_internal/is_publishable"
+            )
 
     def _update_kwargs(self, key: Any, kwargs: Dict):
-        value = kwargs.get(key, None) or self.model_fields[key].default
+        value = kwargs.get(key) if kwargs.get(key) is not None else self.model_fields[key].default
         if value is None:
             return
         kwargs[key] = value
 
-    def get_event_key(self) -> Optional[bytes]: # noqa
+    def get_event_key(self) -> Optional[bytes]:  # noqa
         """
         event unique id key
         partition key for kafka bus

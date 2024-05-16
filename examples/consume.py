@@ -4,7 +4,7 @@ import logging.config
 from event_engine import EventManager
 from event_engine.kafka import KafkaConfig
 from event_engine.kafka import KafkaSubClient
-
+from event_engine.kafka.deserializer import LegacyDeserializer
 from examples.events import PaymentObserver, PaymentEvent1, PaymentEvent2
 
 
@@ -45,7 +45,9 @@ async def consume():
     em: EventManager = EventManager()
     em.register([PaymentEvent1, PaymentEvent2], PaymentObserver(), is_type_check=True)
 
-    client = KafkaSubClient(event_manager=em, kafka_config=kafka_config, handle_signals=False)
+    client = KafkaSubClient(
+        event_manager=em, kafka_config=kafka_config, handle_signals=False, deserializer=LegacyDeserializer()
+    )
 
     # listen events
     await client.listen()

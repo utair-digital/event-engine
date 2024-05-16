@@ -10,10 +10,10 @@ class PaymentEventData(BaseModel):
 
 
 class PaymentEvent(Event[PaymentEventData]):
-    topic = "payments"
-    is_internal = True
+    topic: str = "payments"
+    is_internal: bool = True
 
-    name = "payment_event"
+    name: str = "payment_event"
 
 
 class PaymentHandler(Observer):
@@ -26,10 +26,10 @@ class DemoEventData(BaseModel):
 
 
 class DemoEvent(Event[PaymentEventData]):
-    topic = "demo"
-    is_internal = True
+    topic: str = "demo"
+    is_internal: bool = True
 
-    name = "demo_event"
+    name: str = "demo_event"
 
 
 class DemoHandler(Observer):
@@ -67,3 +67,17 @@ def demo_event() -> DemoEvent:
             "is_publishable": False,
         }
     )
+
+
+@pytest.fixture
+def payment_event_raw_data() -> dict:
+    return {
+        "name": "payment_event",
+        "topic": "payments",
+        "data": {"status": "ok", "payment_id": "we5r24t-okj"},
+        "meta": {"version": "2.0", "trace": None},
+        "event_key": "1",
+        "is_published": False,
+        "is_internal": True,
+        "is_publishable": False,
+    }

@@ -19,6 +19,7 @@ class LegacyDeserializer(BaseDeserializer):
                 "topic": event_data.get("data", {}).get("topic"),
                 "is_internal": event_data.get("data", {}).get("is_internal", True),
                 "is_published": event_data.get("data", {}).get("is_published", True),
+                "is_publishable": event_data.get("data", {}).get("is_publishable", True),
                 "event_key": event_data.get("data", {}).get("event_key", None),
                 "data": event_data.get("data", {}).get("data")
             }
