@@ -6,7 +6,7 @@ from aiokafka.helpers import create_ssl_context
 from ssl import SSLContext
 from enum import Enum
 
-from .exceptions import ProvideTopicsAndPattern, NotProvidedTopicsOrPattern
+from .exceptions import ProvideTopicsAndPattern
 
 
 class AuthSecProtocol(str, Enum):
@@ -31,15 +31,10 @@ class KafkaAuth:
     def ssl_context(self):
         if not self.tlsCAFile:
             raise ValueError("Unable to create ssl context, certificate was not provided")
-        return create_ssl_context(
-            cafile=self.get_cert_path
-        )
+        return create_ssl_context(cafile=self.get_cert_path)
 
     def validate(self):
-        if not all((
-                self.username,
-                self.password
-        )):
+        if not all((self.username, self.password)):
             raise ValueError("Unable to authenticate, username or password was not provided")
 
     @property
@@ -49,9 +44,7 @@ class KafkaAuth:
         if not self.project_root:
             raise ValueError("Unable to read certificate, path is not absolute and project_root was not provided")
         proj_root = Path(self.project_root)
-        return os.path.abspath(os.path.join(
-            proj_root, self.tlsCAFile)
-        )
+        return os.path.abspath(os.path.join(proj_root, self.tlsCAFile))
 
 
 class KafkaConfig:
@@ -63,13 +56,13 @@ class KafkaConfig:
     auth: Optional[KafkaAuth] = None
 
     def __init__(
-            self,
-            servers: List[str],
-            service_name: str,
-            metadata_max_age_ms: int = 10 * 1000,
-            subscribe_topics: Optional[List[str]] = None,
-            subscribe_pattern: Optional[str] = None,
-            auth: Optional[Union[KafkaAuth, Dict]] = None
+        self,
+        servers: List[str],
+        service_name: str,
+        metadata_max_age_ms: int = 10 * 1000,
+        subscribe_topics: Optional[List[str]] = None,
+        subscribe_pattern: Optional[str] = None,
+        auth: Optional[Union[KafkaAuth, Dict]] = None,
     ):
         """
         kafka configs
@@ -91,15 +84,11 @@ class KafkaConfig:
                 either topics or pattern, but not both.
         Raises:
              ProvideTopicsAndPattern: If topics and pattern are provided
-             NotProvidedTopicsOrPattern: If neither topics or pattern is provided
         """
         if subscribe_topics and subscribe_pattern:
             raise ProvideTopicsAndPattern()
         if not subscribe_topics:
             subscribe_topics = list()
-
-        if not (subscribe_topics or subscribe_pattern):
-            raise NotProvidedTopicsOrPattern()
 
         self.servers = servers
         self.subscribe_topics = subscribe_topics

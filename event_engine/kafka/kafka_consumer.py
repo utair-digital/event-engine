@@ -11,7 +11,7 @@ from event_engine.event_manager import EventManager
 from event_engine.exceptions import BaseEventEngineError
 from event_engine.shutdownable import ShutDownable
 from .base import KafkaConfig
-from .exceptions import CantUnpackDataFromBus
+from .exceptions import CantUnpackDataFromBus, NotProvidedTopicsOrPattern
 from ..base import BaseDeserializer
 from ..telemetry import ContextGetter
 
@@ -37,12 +37,17 @@ class KafkaSubClient(ShutDownable):
                 ensuring a clean shutdown and appropriate cleanup for the standalone application
             deserializer:
             logger:
+        Raises:
+             NotProvidedTopicsOrPattern: If neither topics or pattern is provided
         """
 
         self.ee = event_manager
         self.kafka_config = kafka_config
         self.logger = logger
         self.deserializer = deserializer
+
+        if not (self.kafka_config.subscribe_topics or self.kafka_config.subscribe_pattern):
+            raise NotProvidedTopicsOrPattern()
 
         if handle_signals:
             super().__init__(logger=logger)

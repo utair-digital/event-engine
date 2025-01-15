@@ -8,8 +8,7 @@ from .event import Event
 
 @runtime_checkable
 class Bus(Protocol):
-    async def send(self, event: Event):
-        ...
+    async def send(self, event: Event): ...
 
 
 class BaseDeserializer:
