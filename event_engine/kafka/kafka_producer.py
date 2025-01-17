@@ -1,10 +1,7 @@
 from typing import Optional
 from aiokafka import AIOKafkaProducer
 from .base import KafkaConfig
-from .exceptions import (
-    CantRecreateNonExistingProducer,
-    CantCloseNonExistingProducer
-)
+from .exceptions import CantRecreateNonExistingProducer, CantCloseNonExistingProducer
 
 _PRODUCER: Optional[AIOKafkaProducer] = None
 
@@ -20,7 +17,7 @@ async def get_kafka_producer(config: KafkaConfig) -> AIOKafkaProducer:
         ssl_context=config.ssl_context,
         sasl_plain_username=config.auth.username if config.should_auth else None,
         sasl_plain_password=config.auth.password if config.should_auth else None,
-        sasl_mechanism=config.sasl_mechanism.value
+        sasl_mechanism=config.sasl_mechanism.value,
     )
     return await get_kafka_producer(config)
 

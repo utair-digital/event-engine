@@ -1,5 +1,8 @@
 # PyCharm stuff
 .idea*
+*.sublime-*
+
+poetry.lock
 
 env
 venv

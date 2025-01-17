@@ -47,7 +47,7 @@ class KafkaBus:
         else:
             event_data = event.model_dump(mode="json", by_alias=True)
         try:
-            await producer.send_and_wait(topic=event.topic, key=event.event_key, value=msgpack.packb(event_data))
+            await producer.send_and_wait(topic=event.topic, key=event.get_event_key(), value=msgpack.packb(event_data))
         except ProducerClosed as e:
             event.is_published = False
             await _recreate_producer(config=self.kafka_config)
