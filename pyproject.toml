@@ -1,5 +1,6 @@
 [project]
 name = "event-engine"
+version = "0.2.2"
 description = "event driven framework"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,7 +28,6 @@ classifiers = [
 
 [tool.poetry]
 name = "event-engine"
-version = "0.2.1"
 description = ""
 authors = []
 
