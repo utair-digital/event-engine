@@ -11,9 +11,11 @@ from .exceptions import (
     InvalidObserverType,
     BusNotDefinedError,
     EventWasNotSentToBus,
+    EventBuildingError,
 )
 from .observable import Observable
 from .observer import Observer
+from pydantic import ValidationError
 
 
 class EventManager(BaseEventManager):
@@ -146,7 +148,11 @@ class EventManager(BaseEventManager):
         """
         for event_instance in list(self._binds.keys()):
             if str(event_instance.get_default_name()) == event["name"]:
-                return event_instance(**event)
+                try:
+                    return event_instance(**event)
+                except ValidationError as e:
+                    self.logger.exception(e)
+                    raise EventBuildingError("Error building event: {}".format(e))
         err = EventNotRegisteredError('Event "{}" is not registered'.format(event["type"]))
         self.logger.exception(err)
         raise err
