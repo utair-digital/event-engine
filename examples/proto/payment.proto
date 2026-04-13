@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package examples;
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_SUCCESS = 2;
+  PAYMENT_STATUS_FAILED = 3;
+  PAYMENT_STATUS_REFUNDED = 4;
+}
+
+enum Currency {
+  CURRENCY_UNSPECIFIED = 0;
+  CURRENCY_RUB = 1;
+  CURRENCY_USD = 2;
+  CURRENCY_EUR = 3;
+}
+
+message Money {
+  int64 amount = 1;
+  Currency currency = 2;
+}
+
+message PassengerInfo {
+  string first_name = 1;
+  string last_name = 2;
+  string email = 3;
+  string phone = 4;
+}
+
+message PaymentEventData {
+  string payment_id = 1;
+  PaymentStatus status = 2;
+  Money amount = 3;
+  PassengerInfo passenger = 4;
+  string order_id = 5;
+  repeated string ticket_numbers = 6;
+  map<string, string> metadata = 7;
+}

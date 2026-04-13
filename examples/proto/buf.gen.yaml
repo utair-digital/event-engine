@@ -1,0 +1,6 @@
+version: v2
+plugins:
+  - local: protoc-gen-python
+    out: .
+  - local: protoc-gen-mypy
+    out: .

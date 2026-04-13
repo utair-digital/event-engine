@@ -26,6 +26,6 @@ class LegacySerializer(BaseSerializer):
                 is_published=event.is_published,
                 is_publishable=event.is_publishable,
                 name=event.name,
-                data=event.data.model_dump(mode="josn", by_alias=True),
+                data=event.data.model_dump(mode="json", by_alias=True),
             ),
         )
