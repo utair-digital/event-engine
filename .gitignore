@@ -6,10 +6,14 @@ poetry.lock
 
 env
 venv
-
+.venv
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 /.venv/
 .keys/
+
+# Generated protobuf files
+examples/proto/*_pb2.py
+examples/proto/*_pb2_grpc.py

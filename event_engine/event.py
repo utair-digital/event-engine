@@ -1,10 +1,19 @@
 from typing import Generic, TypeVar, Optional, Any, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 
 from .exceptions import EventBuildingError
 
-T = TypeVar("T", bound=BaseModel)
+try:
+    from google.protobuf import json_format
+    from google.protobuf.message import Message as ProtoMessage
+except ImportError:
+    json_format = None  # type: ignore[assignment]
+
+    class ProtoMessage:  # type: ignore[no-redef]
+        pass
+
+T = TypeVar("T", bound=BaseModel | ProtoMessage)
 
 
 class EventMeta(BaseModel):
@@ -17,6 +26,8 @@ class Event(BaseModel, Generic[T]):
     common event
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     name: str = ""
     # fixme: Overriding this field in inherited objects can change the type
     topic: str | None = None
@@ -28,16 +39,31 @@ class Event(BaseModel, Generic[T]):
     is_internal: bool = False
     is_publishable: bool = False
 
+    @model_validator(mode='before')
+    @classmethod
+    def _parse_proto_data(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        t_type = cls.model_fields.get('data', None)
+        if t_type is None:
+            return values
+        t_type = t_type.annotation
+        if isinstance(t_type, type) and issubclass(t_type, ProtoMessage):
+            data = values.get('data')
+            if isinstance(data, dict):
+                try:
+                    values['data'] = json_format.ParseDict(data, t_type())
+                except Exception as e:
+                    raise ValueError(f"Failed to parse proto data for {t_type.__name__}: {e}") from e
+        return values
+
+    @field_serializer("data")
+    def _serialize_data(self, value: Any) -> Any:
+        if isinstance(value, ProtoMessage):
+            return json_format.MessageToDict(value, preserving_proto_field_name=True)
+        return value
+
     def __init__(self, **kwargs):
-        """
-
-        Args:
-            **kwargs:
-
-        Raises:
-             EventBuildingError:
-
-        """
         self._update_kwargs("topic", kwargs)
         self._update_kwargs("is_internal", kwargs)
         self._update_kwargs("is_publishable", kwargs)
